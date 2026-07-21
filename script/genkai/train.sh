@@ -5,5 +5,18 @@
 #PJM -j
 
 module load cuda
+module load singularity
 
-uv run train.py
+# Singularityイメージ
+# IMAGE=/path/to/ubuntu22_cuda.sif
+IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
+
+# プロジェクトディレクトリ
+WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch
+
+singularity exec \
+    --nv \
+    --bind ${WORKDIR}:${WORKDIR} \
+    --pwd ${WORKDIR} \
+    ${IMAGE} \
+    bash -lc "uv run train.py"
