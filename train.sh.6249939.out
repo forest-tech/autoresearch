@@ -1,0 +1,2 @@
+[91mERROR  : Failed to create mount namespace: mount namespace requires privileges, check Singularity installation
+[0m
