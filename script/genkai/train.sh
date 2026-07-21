@@ -5,7 +5,7 @@
 #PJM -j
 
 module load cuda
-module load singularity
+module load singularity-ce
 
 # Singularityイメージ
 # IMAGE=/path/to/ubuntu22_cuda.sif
