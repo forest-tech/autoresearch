@@ -6,4 +6,4 @@
 
 module load cuda
 
-uv run prepare.py
+uv run train.py
