@@ -5,7 +5,7 @@
 #PJM -L jobenv=singularity
 #PJM -j
 
-module load cuda
+# module load cuda
 module load singularity-ce
 
 # Singularityイメージ
