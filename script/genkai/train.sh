@@ -9,7 +9,6 @@
 module load singularity-ce
 
 # Singularityイメージ
-# IMAGE=/path/to/ubuntu22_cuda.sif
 IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
 
 # プロジェクトディレクトリ
