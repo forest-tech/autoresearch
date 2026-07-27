@@ -1,0 +1,84 @@
+# 2026/07/27
+
+## 今日やること
+
+- [ ] singularityコンテナのビルドを完了する
+  - [x] ubuntu の docker イメージでビルドできるか確かめる
+  - [ ] ビルドできれば [nlp-singularity](http://github.com/cl-tohoku/nlp-singularity) が重いだけだが、NLPやるならかなり最小構成なので、ディレクトリのダイエットをする
+  - [ ] 
+
+## やったこと
+
+### ubuntu のdocker イメージでビルド
+
+```sh
+$ module load singularity-ce
+$ singularity build ubuntu.sif docker://ubuntu:latest
+$ ls ubuntu*
+ubuntu.sif
+```
+
+できた。ubuntuのみなのでnlp-singularityと比較すると軽いと考えられる。これがビルドできるため、singularity, genkaiのせいでnlp-singularityのビルドができないわけではない。
+やっぱメモリかも
+
+### 自分のディレクトリダイエット
+
+- `./models`, `./datasets` を`/home/
+- `./projects/*`のいらないものをmdx側に巻き上げる
+
+`./datasets` だけで 120GB あったので、まあまあの節約にはなってそう。(`./models`はディレクトリの容量表示コマンドがあまりに重すぎてctrl+cしたからわからん)
+
+#### `./projects` について
+
+```sh
+(genkai0001) ~/projects
+❯ du -sh ./*
+7.0G	./FastChat
+7.1G	./Telecom-CPT-bench
+14M	./Telecom-LLM-project
+2.8G	./autoresearch
+393G	./lingua_self-dist_v2
+3.5G	./lingua_self-dist_v3
+944G	./lingua_self-distillation
+3.1G	./llm-tutorial-pretrain
+74G	./mori_lingua_self-distillation
+```
+
+より、lingua関係が激重。特に`./ligua_self-distillation` が944GBと明らかに重すぎる。
+原因を探る
+
+```sh
+(genkai0001) ~/projects/lingua_self-distillation main*
+❯ du -sh ./*
+4.0K	./CODE_OF_CONDUCT.md
+4.0K	./CONTRIBUTING.md
+4.0K	./LICENSE
+20K	./README.md
+1.9M	./apps
+4.0K	./check_model.py
+4.0K	./check_model.sh
+72K	./converter
+8.0K	./data
+200K	./dataloader.png
+484K	./lingua
+492K	./lingua_overview.svg
+4.0K	./main.py
+72K	./md
+941G	./outputs
+1.4M	./outputs_eval
+4.0K	./pyproject.toml
+4.0K	./requirements.txt
+192K	./scripts
+64K	./self-dist_llama-1b_ce_train_convert_eval.sh.4614357.out
+32K	./setup
+7.8M	./stdout
+128K	./tests
+2.2M	./tokenizer
+700K	./uv.lock
+218M	./wandb
+```
+
+`./outputs`が 941GB でほとんどこの部分による影響とわかる。
+`./outputs`中に含まれるチェックポイントが重いと分かった。
+
+
