@@ -1,7 +1,7 @@
 #!/bin/bash
 #PJM -L rscgrp=c-batch
 #PJM -L gpu=1
-#PJM -L elapse=12:00:00
+#PJM -L elapse=00:29:00
 #PJM -L jobenv=singularity
 #PJM -j
 
@@ -16,10 +16,10 @@ module load singularity-ce
 IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
 WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch
 
-NUM_ITERATIONS=5
+NUM_ITERATIONS=3
 
-RESULT_FILE="${WORKDIR}/repository/result.tsv"
-TRAIN_LOG="${WORKDIR}/repository/train.log"
+RESULT_FILE="${WORKDIR}/result.jsonl"
+TRAIN_LOG="${WORKDIR}/train.log"
 
 
 # =========================
@@ -47,15 +47,9 @@ for i in $(seq 1 "${NUM_ITERATIONS}"); do
     echo "[TRAIN] Training finished."
 
     # -------------------------
-    # 2. 5分30秒待機
-    # -------------------------
-    echo "[WAIT] Waiting 5 minutes 30 seconds..."
-    sleep 330
-
-    # -------------------------
-    # 3. Codex
+    # 2. Codex
     #    - train.log を解析
-    #    - result.tsv に結果を追記
+    #    - result.jsonl に結果を追記
     #    - 次のパラメータを調整
     # -------------------------
     echo "[CODEX] Starting analysis and parameter adjustment..."
@@ -68,17 +62,17 @@ for i in $(seq 1 "${NUM_ITERATIONS}"); do
             codex exec --skip-git-repo-check '
 現在は実験 iteration ${i} が終了した直後です。
 
-まず repository/train.log を確認し、
+まず train.log を確認し、
 今回の学習結果と評価指標を読み取ってください。
 
 次に、今回使用した主要な学習パラメータもコードや設定ファイルから確認し、
-repository/result.tsv に今回の実験結果を1行追記してください。
+result.jsonl に今回の実験結果を1行追記してください。
 
-result.tsv が存在しない場合は新しく作成してください。
+result.jsonl が存在しない場合は新しく作成してください。
 既に存在する場合は、これまでの結果を絶対に削除・上書きせず、
 末尾に今回の結果だけを追記してください。
 
-result.tsv には少なくとも以下の情報が分かるようにしてください。
+result.jsonl には少なくとも以下の情報が分かるようにしてください。
 
 - iteration
 - 今回使用した主要な学習パラメータ
@@ -87,7 +81,7 @@ result.tsv には少なくとも以下の情報が分かるようにしてくだ
 
 今回の iteration は ${i} です。
 
-その後、repository/result.tsv に記録されている
+その後、result.jsonl に記録されている
 これまでの実験結果を比較してください。
 
 過去の結果を参考に、
@@ -95,23 +89,22 @@ result.tsv には少なくとも以下の情報が分かるようにしてくだ
 学習パラメータを調整してください。
 
 条件:
-- repository/train.log から今回の結果を正しく読み取ること
-- repository/result.tsv に今回の結果を必ず記録すること
-- result.tsv の過去の記録は削除・上書きしないこと
+- train.log から今回の結果を正しく読み取ること
+- result.jsonl に今回の結果を必ず記録すること
+- result.jsonl の過去の記録は削除・上書きしないこと
 - 過去に試したパラメータ設定を可能な限り繰り返さないこと
 - 次のループで uv run train.py をそのまま実行できる状態にすること
 - 学習コードの大幅な変更は避け、パラメータ調整を中心に行うこと
-'
-        "
+'"
 
     echo "[CODEX] Finished."
 
-    # result.tsv をログにも表示
+    # result.jsonl をログにも表示
     if [ -f "${RESULT_FILE}" ]; then
-        echo "[RESULT] Current result.tsv:"
+        echo "[RESULT] Current result.jsonl:"
         cat "${RESULT_FILE}"
     else
-        echo "[WARNING] result.tsv was not created."
+        echo "[WARNING] result.jsonl was not created."
         exit 1
     fi
 
