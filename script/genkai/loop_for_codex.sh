@@ -1,7 +1,7 @@
 #!/bin/bash
 #PJM -L rscgrp=c-batch
 #PJM -L gpu=1
-#PJM -L elapse=01:00:00
+#PJM -L elapse=02:00:00
 #PJM -L jobenv=singularity
 #PJM -j
 
@@ -12,10 +12,15 @@ module load singularity-ce
 IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
 WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch
 
-NUM_ITERATIONS=5
+NUM_ITERATIONS=10
 
-RESULT_FILE="${WORKDIR}/results.jsonl"
-RUN_ROOT="${WORKDIR}/results"
+DATE=$(date +%Y%m%d_%H%M%S)
+
+RUN_ROOT="${WORKDIR}/results/${DATE}"
+RESULT_FILE="${RUN_ROOT}/results.jsonl"
+
+RESULT_REL="${RESULT_FILE#${WORKDIR}/}"
+RUN_ROOT_REL="${RUN_ROOT#${WORKDIR}/}"
 
 cd "${WORKDIR}"
 
@@ -472,7 +477,7 @@ for n in $(seq 1 "${NUM_ITERATIONS}"); do
 
         cat > "${PROMPT_FILE}" <<EOF
 You are preparing exactly one candidate experiment for an autonomous
-LLM training loop on Genkai.
+LLM training loop on HPC environment.
 
 Current iteration: ${ITER}
 Current accepted commit: ${BASE_COMMIT}
@@ -480,19 +485,28 @@ Current accepted commit: ${BASE_COMMIT}
 Primary metric:
 val_bpb (lower is better)
 
+Current experiment run directory:
+${RUN_ROOT_REL}
+
+Current experiment history:
+${RESULT_REL}
+
 The shell script owns:
 
 - training execution
-- results.jsonl
+- ${RESULT_REL}
 - keep/discard decisions
 - git commits
+- experiment artifact management
 
 Your task is ONLY to choose the next experiment and edit train.py.
 
 Instructions:
 
-- Read README.md, prepare.py, train.py, and results.jsonl.
-- Inspect previous artifacts under results/ when useful.
+- Read README.md, prepare.py, train.py, and ${RESULT_REL}.
+- Inspect artifacts from the current run under ${RUN_ROOT_REL}/ when useful.
+- Use previous keep/discard results and recorded hyperparameters to avoid repeating unsuccessful experiments.
+- Compare the current accepted configuration with previous candidate configurations when deciding the next experiment.
 - Choose one change that has a plausible chance to lower val_bpb.
 - Prefer one-factor-at-a-time and small/local changes initially.
 - Avoid repeating previous experiments.
@@ -500,7 +514,8 @@ Instructions:
 - Do NOT run uv run train.py.
 - Do NOT edit prepare.py.
 - Do NOT edit program.md.
-- Do NOT edit results.jsonl.
+- Do NOT edit ${RESULT_REL}.
+- Do NOT edit files under results/.
 - Do NOT edit scripts.
 - Do NOT modify .git.
 - Do NOT run git commit/reset/checkout/restore.
@@ -508,6 +523,7 @@ Instructions:
 
 Final response:
 output only a short one-line description of the experiment.
+Do not use tabs.
 EOF
 
         echo "[CODEX] generating candidate"
