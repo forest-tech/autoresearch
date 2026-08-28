@@ -1,0 +1,60 @@
+
+========================================
+Iteration 1
+========================================
+[BASELINE] current train.py
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.995500
+[RESULT] memory=44.0 GB
+[RESULT] status=keep
+[BEST]   val_bpb=0.995500
+
+========================================
+Iteration 2
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.996148
+[RESULT] memory=44.0 GB
+[RESULT] status=discard
+[BEST]   val_bpb=0.995500
+
+========================================
+Iteration 3
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.995920
+[RESULT] memory=44.0 GB
+[RESULT] status=discard
+[BEST]   val_bpb=0.995500
+
+========================================
+Iteration 4
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.987060
+[RESULT] memory=43.9 GB
+[RESULT] status=keep
+[BEST]   val_bpb=0.987060
+
+========================================
+Iteration 5
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.991041
+[RESULT] memory=22.2 GB
+[RESULT] status=discard
+[BEST]   val_bpb=0.987060
+
+========================================
+Finished 5 experiments
+Results: /home/pj24001974/ku50001532/projects/autoresearch/results.jsonl
+========================================
