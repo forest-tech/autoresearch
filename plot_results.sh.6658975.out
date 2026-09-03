@@ -1,0 +1,5 @@
+Usage:
+  pjsub /home/pj24001974/ku50001532/projects/autoresearch/.d0006658975 <results.jsonl>
+
+Example:
+  pjsub /home/pj24001974/ku50001532/projects/autoresearch/.d0006658975 results/20260828_192954/results.jsonl

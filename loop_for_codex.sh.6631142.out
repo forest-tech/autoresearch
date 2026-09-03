@@ -1,0 +1,115 @@
+
+========================================
+Iteration 1
+========================================
+[BASELINE] current train.py
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.987006
+[RESULT] memory=43.9 GB
+[RESULT] status=keep
+[BEST]   val_bpb=0.987006
+
+========================================
+Iteration 2
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.987385
+[RESULT] memory=43.9 GB
+[RESULT] status=discard
+[BEST]   val_bpb=0.987006
+
+========================================
+Iteration 3
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.986568
+[RESULT] memory=43.9 GB
+[RESULT] status=keep
+[BEST]   val_bpb=0.986568
+
+========================================
+Iteration 4
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.986182
+[RESULT] memory=43.9 GB
+[RESULT] status=keep
+[BEST]   val_bpb=0.986182
+
+========================================
+Iteration 5
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.986267
+[RESULT] memory=43.9 GB
+[RESULT] status=discard
+[BEST]   val_bpb=0.986182
+
+========================================
+Iteration 6
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.986176
+[RESULT] memory=43.9 GB
+[RESULT] status=keep
+[BEST]   val_bpb=0.986176
+
+========================================
+Iteration 7
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.986143
+[RESULT] memory=43.9 GB
+[RESULT] status=keep
+[BEST]   val_bpb=0.986143
+
+========================================
+Iteration 8
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.986362
+[RESULT] memory=43.9 GB
+[RESULT] status=discard
+[BEST]   val_bpb=0.986143
+
+========================================
+Iteration 9
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.986210
+[RESULT] memory=43.9 GB
+[RESULT] status=discard
+[BEST]   val_bpb=0.986143
+
+========================================
+Iteration 10
+========================================
+[CODEX] generating candidate
+[CONFIG] snapshotting experiment configuration
+[TRAIN] starting
+[RESULT] val_bpb=0.986111
+[RESULT] memory=43.9 GB
+[RESULT] status=keep
+[BEST]   val_bpb=0.986111
+
+========================================
+Finished 10 experiments
+Results: /home/pj24001974/ku50001532/projects/autoresearch/results/20260828_192954/results.jsonl
+========================================
