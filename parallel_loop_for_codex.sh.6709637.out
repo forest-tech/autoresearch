@@ -1,0 +1,45 @@
+[SETUP] branch=autoresearch/sep4
+[SETUP] GPUs=4
+[SETUP] results=/home/pj24001974/ku50001532/projects/autoresearch/results/20260904_114511/results.jsonl
+Preparing worktree (detached HEAD 17737d2)
+[BASELINE] val_bpb=1.002127 commit=17737d2
+
+========================================
+Round 1/10
+base=17737d2 best=1.002127
+========================================
+Preparing worktree (detached HEAD 17737d2)
+[CODEX] round=1 worker=0 generating candidate
+Preparing worktree (detached HEAD 17737d2)
+[CODEX] round=1 worker=1 generating candidate
+Preparing worktree (detached HEAD 17737d2)
+[CODEX] round=1 worker=2 generating candidate
+Preparing worktree (detached HEAD 17737d2)
+[CODEX] round=1 worker=3 generating candidate
+[LAUNCH] worker=0 gpu=0
+[LAUNCH] worker=1 gpu=1
+[LAUNCH] worker=2 gpu=2
+[LAUNCH] worker=3 gpu=3
+[KEEP] worker=3 val_bpb=1.001828 commit=97891b4
+[BEST] val_bpb=1.001828
+
+========================================
+Round 2/10
+base=97891b4 best=1.001828
+========================================
+Preparing worktree (detached HEAD 97891b4)
+[CODEX] round=2 worker=0 generating candidate
+Preparing worktree (detached HEAD 97891b4)
+[CODEX] round=2 worker=1 generating candidate
+Preparing worktree (detached HEAD 97891b4)
+[CODEX] round=2 worker=2 generating candidate
+Preparing worktree (detached HEAD 97891b4)
+[CODEX] round=2 worker=3 generating candidate
+[LAUNCH] worker=0 gpu=0
+[LAUNCH] worker=1 gpu=1
+[LAUNCH] worker=2 gpu=2
+[LAUNCH] worker=3 gpu=3
+/home/pj24001974/ku50001532/projects/autoresearch/.d0006709637: 36 行: 264609 CPU時間制限を超過しました            bash "${WORKER_SCRIPT}" "${WORKER}" "${WORKER}" "${WT_DIRS[${WORKER}]}" "${WORKER_DIRS[${WORKER}]}" "${IMAGE}" "${WORKDIR}" > "${WORKER_DIRS[${WORKER}]}/worker.stdout" 2> "${WORKER_DIRS[${WORKER}]}/worker.stderr"
+/home/pj24001974/ku50001532/projects/autoresearch/.d0006709637: 36 行: 264610 CPU時間制限を超過しました            bash "${WORKER_SCRIPT}" "${WORKER}" "${WORKER}" "${WT_DIRS[${WORKER}]}" "${WORKER_DIRS[${WORKER}]}" "${IMAGE}" "${WORKDIR}" > "${WORKER_DIRS[${WORKER}]}/worker.stdout" 2> "${WORKER_DIRS[${WORKER}]}/worker.stderr"
+/home/pj24001974/ku50001532/projects/autoresearch/.d0006709637: 36 行: 264611 CPU時間制限を超過しました            bash "${WORKER_SCRIPT}" "${WORKER}" "${WORKER}" "${WT_DIRS[${WORKER}]}" "${WORKER_DIRS[${WORKER}]}" "${IMAGE}" "${WORKDIR}" > "${WORKER_DIRS[${WORKER}]}/worker.stdout" 2> "${WORKER_DIRS[${WORKER}]}/worker.stderr"
+/home/pj24001974/ku50001532/projects/autoresearch/.d0006709637: 36 行: 264612 CPU時間制限を超過しました            bash "${WORKER_SCRIPT}" "${WORKER}" "${WORKER}" "${WT_DIRS[${WORKER}]}" "${WORKER_DIRS[${WORKER}]}" "${IMAGE}" "${WORKDIR}" > "${WORKER_DIRS[${WORKER}]}/worker.stdout" 2> "${WORKER_DIRS[${WORKER}]}/worker.stderr"
