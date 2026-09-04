@@ -25,10 +25,16 @@ def load_results(path: Path):
             if "round" not in record or "val_bpb" not in record:
                 continue
 
+            # val_bpb が null の場合は 10 とする
+            if record["val_bpb"] is None:
+                record["val_bpb"] = 10
+
             records.append(record)
 
     if not records:
-        raise ValueError("No records containing both 'round' and 'val_bpb' were found.")
+        raise ValueError(
+            "No records containing both 'round' and 'val_bpb' were found."
+        )
 
     return records
 
