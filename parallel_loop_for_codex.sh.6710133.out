@@ -181,3 +181,9 @@ base=c392bc6 best=0.987361
 ========================================
 Preparing worktree (detached HEAD c392bc6)
 [CODEX] round=10 worker=0 generating candidate
+Preparing worktree (detached HEAD c392bc6)
+[CODEX] round=10 worker=1 generating candidate
+Preparing worktree (detached HEAD c392bc6)
+[CODEX] round=10 worker=2 generating candidate
+Preparing worktree (detached HEAD c392bc6)
+[CODEX] round=10 worker=3 generating candidate
