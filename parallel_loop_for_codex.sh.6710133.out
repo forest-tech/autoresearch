@@ -187,3 +187,7 @@ Preparing worktree (detached HEAD c392bc6)
 [CODEX] round=10 worker=2 generating candidate
 Preparing worktree (detached HEAD c392bc6)
 [CODEX] round=10 worker=3 generating candidate
+[LAUNCH] worker=0 gpu=0
+[LAUNCH] worker=1 gpu=1
+[LAUNCH] worker=2 gpu=2
+[LAUNCH] worker=3 gpu=3

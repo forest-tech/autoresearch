@@ -1,7 +1,6 @@
 import argparse
 import json
 import textwrap
-from collections import defaultdict
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -9,9 +8,11 @@ import matplotlib.pyplot as plt
 
 def load_results(path: Path):
     records = []
+
     with path.open("r", encoding="utf-8") as f:
         for line_no, line in enumerate(f, start=1):
             line = line.strip()
+
             if not line:
                 continue
 
@@ -22,150 +23,250 @@ def load_results(path: Path):
                     f"Invalid JSON at line {line_no}: {e}"
                 ) from e
 
-            if "round" not in record or "val_bpb" not in record:
+            if "iteration" not in record:
                 continue
-
-            # val_bpb が null の場合は 1 とする
-            if record["val_bpb"] is None:
-                record["val_bpb"] = 1
 
             records.append(record)
 
     if not records:
-        raise ValueError(
-            "No records containing both 'round' and 'val_bpb' were found."
-        )
+        raise ValueError("No experiment records were found.")
 
-    return records
+    return sorted(records, key=lambda r: r["iteration"])
+
+
+def shorten_description(description: str, width: int = 42) -> str:
+    if not description:
+        return ""
+
+    description = " ".join(description.split())
+
+    return textwrap.shorten(
+        description,
+        width=width,
+        placeholder="...",
+    )
 
 
 def plot_results(records, output_path: Path):
-    records = sorted(
-        records,
-        key=lambda r: (
-            r["round"],
-            r.get("worker") is not None,
-            r.get("worker") if r.get("worker") is not None else -1,
-            r.get("iteration", 0),
-        ),
-    )
+    # ---------------------------------------------
+    # Valid experiments
+    # ---------------------------------------------
+    valid_records = [
+        r for r in records
+        if r.get("val_bpb") is not None
+    ]
 
-    by_round = defaultdict(list)
-    for record in records:
-        by_round[record["round"]].append(record)
+    if not valid_records:
+        raise ValueError("No records with valid val_bpb were found.")
 
-    fig, ax = plt.subplots(figsize=(11, 6))
+    kept_records = [
+        r for r in valid_records
+        if r.get("status") == "keep"
+    ]
 
-    # 全実験候補
-    ax.scatter(
-        [r["round"] for r in records],
-        [r["val_bpb"] for r in records],
-        s=55,
-        alpha=0.75,
-        label="Candidates",
-        zorder=2,
-    )
+    discarded_records = [
+        r for r in valid_records
+        if r.get("status") != "keep"
+    ]
 
-    # keep された結果をつないで、採用系列を見やすくする
-    kept = [r for r in records if r.get("status") == "keep"]
-    kept.sort(key=lambda r: (r["round"], r.get("iteration", 0)))
+    # iteration は 1 始まりなので表示用に 0 始まりにする
+    xs = [r["iteration"] - 1 for r in valid_records]
 
-    if kept:
-        ax.plot(
-            [r["round"] for r in kept],
-            [r["val_bpb"] for r in kept],
-            marker="o",
-            linewidth=2,
-            label="Accepted",
-            zorder=3,
+    # ---------------------------------------------
+    # Running best
+    # ---------------------------------------------
+    running_best_x = []
+    running_best_y = []
+
+    best = float("inf")
+
+    for r in valid_records:
+        x = r["iteration"] - 1
+        value = r["val_bpb"]
+
+        if value < best:
+            best = value
+
+        running_best_x.append(x)
+        running_best_y.append(best)
+
+    # ---------------------------------------------
+    # Figure
+    # ---------------------------------------------
+    fig, ax = plt.subplots(figsize=(18, 8))
+
+    # Discarded experiments
+    if discarded_records:
+        ax.scatter(
+            [r["iteration"] - 1 for r in discarded_records],
+            [r["val_bpb"] for r in discarded_records],
+            s=18,
+            alpha=0.22,
+            edgecolors="none",
+            label="Discarded",
+            zorder=2,
         )
 
-    # 各 round は同じ base から並列探索される想定。
-    # その round が始まる前の accepted BPB より低い候補だけ注釈する。
-    incumbent_bpb = None
+    # Kept experiments
+    if kept_records:
+        ax.scatter(
+            [r["iteration"] - 1 for r in kept_records],
+            [r["val_bpb"] for r in kept_records],
+            s=55,
+            edgecolors="black",
+            linewidths=0.6,
+            label="Kept",
+            zorder=4,
+        )
 
-    for round_id in sorted(by_round):
-        round_records = by_round[round_id]
+    # Running best
+    ax.step(
+        running_best_x,
+        running_best_y,
+        where="post",
+        linewidth=2.0,
+        alpha=0.75,
+        label="Running best",
+        zorder=3,
+    )
 
-        if incumbent_bpb is not None:
-            improved = [
-                r for r in round_records
-                if r["val_bpb"] < incumbent_bpb
-            ]
+    # ---------------------------------------------
+    # Annotations for kept experiments
+    # ---------------------------------------------
+    for r in kept_records:
+        x = r["iteration"] - 1
+        y = r["val_bpb"]
 
-            for i, record in enumerate(improved):
-                description = record.get("description", "")
-                if not description:
-                    continue
+        description = shorten_description(
+            r.get("description", "")
+        )
 
-                wrapped = "\n".join(
-                    textwrap.wrap(description, width=42)
-                )
+        if not description:
+            continue
 
-                ax.annotate(
-                    wrapped,
-                    xy=(record["round"], record["val_bpb"]),
-                    xytext=(12, 18 + i * 38),
-                    textcoords="offset points",
-                    fontsize=9,
-                    arrowprops={"arrowstyle": "->"},
-                    bbox={
-                        "boxstyle": "round,pad=0.3",
-                        "alpha": 0.85,
-                    },
-                    zorder=4,
-                )
+        ax.annotate(
+            description,
+            xy=(x, y),
+            xytext=(6, 7),
+            textcoords="offset points",
+            fontsize=9,
+            rotation=28,
+            ha="left",
+            va="bottom",
+            alpha=0.9,
+            annotation_clip=True,
+        )
 
-        # 次 round の比較基準は、この round で keep された結果。
-        round_kept = [
-            r for r in round_records
-            if r.get("status") == "keep"
-        ]
+    # ---------------------------------------------
+    # Labels / title
+    # ---------------------------------------------
+    num_experiments = len(records)
+    num_kept = len([
+        r for r in records
+        if r.get("status") == "keep"
+    ])
 
-        if round_kept:
-            incumbent_bpb = min(r["val_bpb"] for r in round_kept)
-        elif incumbent_bpb is None:
-            # baseline に status=keep が無い場合の保険
-            incumbent_bpb = min(r["val_bpb"] for r in round_records)
+    # baseline を improvement 数から除外
+    num_improvements = max(0, num_kept - 1)
 
-    ax.set_xlabel("Round")
-    ax.set_ylabel("BPB (↓)")
-    ax.set_title("BPB by Round")
-    ax.grid(True, alpha=0.3)
-    ax.legend()
-    ax.set_xticks(sorted(by_round.keys()))
+    ax.set_title(
+        f"Autoresearch Progress: "
+        f"{num_experiments} Experiments, "
+        f"{num_improvements} Kept Improvements",
+        fontsize=16,
+    )
 
-    fig.tight_layout()
-    fig.savefig(output_path, dpi=200, bbox_inches="tight")
-    print(f"Saved: {output_path}")
+    ax.set_xlabel(
+        "Experiment #",
+        fontsize=13,
+    )
+
+    ax.set_ylabel(
+        "Validation BPB (lower is better)",
+        fontsize=13,
+    )
+
+    # ---------------------------------------------
+    # Appearance
+    # ---------------------------------------------
+    ax.grid(
+        True,
+        alpha=0.18,
+        linewidth=0.8,
+    )
+
+    ax.tick_params(
+        axis="both",
+        labelsize=11,
+    )
+
+    ax.legend(
+        loc="upper right",
+        frameon=True,
+    )
+
+    # 少し余白をつける
+    values = [r["val_bpb"] for r in valid_records]
+
+    ymin = min(values)
+    ymax = max(values)
+    margin = max((ymax - ymin) * 0.04, 0.0005)
+
+    ax.set_ylim(
+        ymin - margin,
+        ymax + margin * 3,
+    )
+
+    ax.margins(x=0.01)
+
+    plt.tight_layout()
+
+    output_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    fig.savefig(
+        output_path,
+        dpi=150,
+        bbox_inches="tight",
+    )
+
+    print(f"Saved plot to: {output_path}")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Plot val_bpb by round from results.jsonl."
+        description="Plot autoresearch experiment progress."
     )
+
     parser.add_argument(
         "results",
         type=Path,
         help="Path to results.jsonl",
     )
+
     parser.add_argument(
         "-o",
         "--output",
         type=Path,
         default=None,
-        help="Output image path (default: <results_dir>/bpb_by_round.png)",
+        help="Output image path",
     )
+
     args = parser.parse_args()
 
-    output_path = (
-        args.output
-        if args.output is not None
-        else args.results.parent / "bpb_by_round.png"
-    )
+    if args.output is None:
+        output_path = args.results.parent / "progress.png"
+    else:
+        output_path = args.output
 
     records = load_results(args.results)
-    plot_results(records, output_path)
+
+    plot_results(
+        records,
+        output_path,
+    )
 
 
 if __name__ == "__main__":
