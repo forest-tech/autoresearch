@@ -1,7 +1,7 @@
 #!/bin/bash
 #PJM -L rscgrp=b-batch
 #PJM -L node=1
-#PJM -L elapse=02:00:00
+#PJM -L elapse=00:29:00
 #PJM -L jobenv=singularity
 #PJM -j
 
