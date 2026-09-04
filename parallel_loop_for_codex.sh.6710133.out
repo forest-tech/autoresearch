@@ -1,0 +1,174 @@
+[SETUP] branch=autoresearch/sep4
+[SETUP] GPUs=8
+[SETUP] results=/home/pj24001974/ku50001532/projects/autoresearch/results/20260904_132522/results.jsonl
+Preparing worktree (detached HEAD 0cb8c95)
+[BASELINE] val_bpb=0.995865 commit=0cb8c95
+
+========================================
+Round 1/10
+base=0cb8c95 best=0.995865
+========================================
+Preparing worktree (detached HEAD 0cb8c95)
+[CODEX] round=1 worker=0 generating candidate
+Preparing worktree (detached HEAD 0cb8c95)
+[CODEX] round=1 worker=1 generating candidate
+Preparing worktree (detached HEAD 0cb8c95)
+[CODEX] round=1 worker=2 generating candidate
+Preparing worktree (detached HEAD 0cb8c95)
+[CODEX] round=1 worker=3 generating candidate
+[LAUNCH] worker=0 gpu=0
+[LAUNCH] worker=1 gpu=1
+[LAUNCH] worker=2 gpu=2
+[LAUNCH] worker=3 gpu=3
+[DISCARD] no candidate improved val_bpb=0.995865
+[BEST] val_bpb=0.995865
+
+========================================
+Round 2/10
+base=0cb8c95 best=0.995865
+========================================
+Preparing worktree (detached HEAD 0cb8c95)
+[CODEX] round=2 worker=0 generating candidate
+Preparing worktree (detached HEAD 0cb8c95)
+[CODEX] round=2 worker=1 generating candidate
+Preparing worktree (detached HEAD 0cb8c95)
+[CODEX] round=2 worker=2 generating candidate
+Preparing worktree (detached HEAD 0cb8c95)
+[CODEX] round=2 worker=3 generating candidate
+[LAUNCH] worker=0 gpu=0
+[LAUNCH] worker=1 gpu=1
+[LAUNCH] worker=2 gpu=2
+[LAUNCH] worker=3 gpu=3
+[KEEP] worker=2 val_bpb=0.989903 commit=7c28937
+[BEST] val_bpb=0.989903
+
+========================================
+Round 3/10
+base=7c28937 best=0.989903
+========================================
+Preparing worktree (detached HEAD 7c28937)
+[CODEX] round=3 worker=0 generating candidate
+Preparing worktree (detached HEAD 7c28937)
+[CODEX] round=3 worker=1 generating candidate
+Preparing worktree (detached HEAD 7c28937)
+[CODEX] round=3 worker=2 generating candidate
+Preparing worktree (detached HEAD 7c28937)
+[CODEX] round=3 worker=3 generating candidate
+[LAUNCH] worker=0 gpu=0
+[LAUNCH] worker=1 gpu=1
+[LAUNCH] worker=2 gpu=2
+[LAUNCH] worker=3 gpu=3
+[KEEP] worker=0 val_bpb=0.988353 commit=dab7949
+[BEST] val_bpb=0.988353
+
+========================================
+Round 4/10
+base=dab7949 best=0.988353
+========================================
+Preparing worktree (detached HEAD dab7949)
+[CODEX] round=4 worker=0 generating candidate
+Preparing worktree (detached HEAD dab7949)
+[CODEX] round=4 worker=1 generating candidate
+Preparing worktree (detached HEAD dab7949)
+[CODEX] round=4 worker=2 generating candidate
+Preparing worktree (detached HEAD dab7949)
+[CODEX] round=4 worker=3 generating candidate
+[LAUNCH] worker=0 gpu=0
+[LAUNCH] worker=1 gpu=1
+[LAUNCH] worker=2 gpu=2
+[LAUNCH] worker=3 gpu=3
+[KEEP] worker=2 val_bpb=0.987959 commit=3459027
+[BEST] val_bpb=0.987959
+
+========================================
+Round 5/10
+base=3459027 best=0.987959
+========================================
+Preparing worktree (detached HEAD 3459027)
+[CODEX] round=5 worker=0 generating candidate
+Preparing worktree (detached HEAD 3459027)
+[CODEX] round=5 worker=1 generating candidate
+Preparing worktree (detached HEAD 3459027)
+[CODEX] round=5 worker=2 generating candidate
+Preparing worktree (detached HEAD 3459027)
+[CODEX] round=5 worker=3 generating candidate
+[LAUNCH] worker=0 gpu=0
+[LAUNCH] worker=1 gpu=1
+[LAUNCH] worker=2 gpu=2
+[LAUNCH] worker=3 gpu=3
+[DISCARD] no candidate improved val_bpb=0.987959
+[BEST] val_bpb=0.987959
+
+========================================
+Round 6/10
+base=3459027 best=0.987959
+========================================
+Preparing worktree (detached HEAD 3459027)
+[CODEX] round=6 worker=0 generating candidate
+Preparing worktree (detached HEAD 3459027)
+[CODEX] round=6 worker=1 generating candidate
+Preparing worktree (detached HEAD 3459027)
+[CODEX] round=6 worker=2 generating candidate
+Preparing worktree (detached HEAD 3459027)
+[CODEX] round=6 worker=3 generating candidate
+[LAUNCH] worker=0 gpu=0
+[LAUNCH] worker=1 gpu=1
+[LAUNCH] worker=2 gpu=2
+[LAUNCH] worker=3 gpu=3
+[DISCARD] no candidate improved val_bpb=0.987959
+[BEST] val_bpb=0.987959
+
+========================================
+Round 7/10
+base=3459027 best=0.987959
+========================================
+Preparing worktree (detached HEAD 3459027)
+[CODEX] round=7 worker=0 generating candidate
+Preparing worktree (detached HEAD 3459027)
+[CODEX] round=7 worker=1 generating candidate
+Preparing worktree (detached HEAD 3459027)
+[CODEX] round=7 worker=2 generating candidate
+Preparing worktree (detached HEAD 3459027)
+[CODEX] round=7 worker=3 generating candidate
+[LAUNCH] worker=0 gpu=0
+[LAUNCH] worker=1 gpu=1
+[LAUNCH] worker=2 gpu=2
+[LAUNCH] worker=3 gpu=3
+[KEEP] worker=0 val_bpb=0.987361 commit=6b0e601
+[BEST] val_bpb=0.987361
+
+========================================
+Round 8/10
+base=6b0e601 best=0.987361
+========================================
+Preparing worktree (detached HEAD 6b0e601)
+[CODEX] round=8 worker=0 generating candidate
+Preparing worktree (detached HEAD 6b0e601)
+[CODEX] round=8 worker=1 generating candidate
+Preparing worktree (detached HEAD 6b0e601)
+[CODEX] round=8 worker=2 generating candidate
+Preparing worktree (detached HEAD 6b0e601)
+[CODEX] round=8 worker=3 generating candidate
+[LAUNCH] worker=0 gpu=0
+[LAUNCH] worker=1 gpu=1
+[LAUNCH] worker=2 gpu=2
+[LAUNCH] worker=3 gpu=3
+[DISCARD] no candidate improved val_bpb=0.987361
+[BEST] val_bpb=0.987361
+
+========================================
+Round 9/10
+base=6b0e601 best=0.987361
+========================================
+Preparing worktree (detached HEAD 6b0e601)
+[CODEX] round=9 worker=0 generating candidate
+Preparing worktree (detached HEAD 6b0e601)
+[CODEX] round=9 worker=1 generating candidate
+Preparing worktree (detached HEAD 6b0e601)
+[CODEX] round=9 worker=2 generating candidate
+Preparing worktree (detached HEAD 6b0e601)
+[CODEX] round=9 worker=3 generating candidate
+[LAUNCH] worker=0 gpu=0
+[LAUNCH] worker=1 gpu=1
+[LAUNCH] worker=2 gpu=2
+[LAUNCH] worker=3 gpu=3
