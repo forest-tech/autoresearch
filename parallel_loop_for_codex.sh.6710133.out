@@ -191,3 +191,11 @@ Preparing worktree (detached HEAD c392bc6)
 [LAUNCH] worker=1 gpu=1
 [LAUNCH] worker=2 gpu=2
 [LAUNCH] worker=3 gpu=3
+[DISCARD] no candidate improved val_bpb=0.987361
+[BEST] val_bpb=0.987361
+
+========================================
+Finished 10 parallel rounds
+Best val_bpb: 0.987361
+Results: /home/pj24001974/ku50001532/projects/autoresearch/results/20260904_132522/results.jsonl
+========================================

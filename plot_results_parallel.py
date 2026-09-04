@@ -23,7 +23,7 @@ def load_results(path: Path):
                     f"Invalid JSON at line {line_no}: {e}"
                 ) from e
 
-            if "iteration" not in record:
+            if "round" not in record:
                 continue
 
             records.append(record)
@@ -31,7 +31,14 @@ def load_results(path: Path):
     if not records:
         raise ValueError("No experiment records were found.")
 
-    return sorted(records, key=lambda r: r["iteration"])
+    return sorted(
+        records,
+        key=lambda r: (
+            r["round"],
+            r.get("worker") is not None,
+            r.get("worker") if r.get("worker") is not None else -1,
+        ),
+    )
 
 
 def shorten_description(description: str, width: int = 42) -> str:
@@ -48,9 +55,6 @@ def shorten_description(description: str, width: int = 42) -> str:
 
 
 def plot_results(records, output_path: Path):
-    # ---------------------------------------------
-    # Valid experiments
-    # ---------------------------------------------
     valid_records = [
         r for r in records
         if r.get("val_bpb") is not None
@@ -69,25 +73,34 @@ def plot_results(records, output_path: Path):
         if r.get("status") != "keep"
     ]
 
-    # iteration は 1 始まりなので表示用に 0 始まりにする
-    xs = [r["iteration"] - 1 for r in valid_records]
+    # ---------------------------------------------
+    # Running best by round
+    # ---------------------------------------------
+    rounds = sorted({
+        r["round"]
+        for r in valid_records
+    })
 
-    # ---------------------------------------------
-    # Running best
-    # ---------------------------------------------
     running_best_x = []
     running_best_y = []
 
     best = float("inf")
 
-    for r in valid_records:
-        x = r["iteration"] - 1
-        value = r["val_bpb"]
+    for round_id in rounds:
+        round_records = [
+            r for r in valid_records
+            if r["round"] == round_id
+        ]
 
-        if value < best:
-            best = value
+        round_values = [
+            r["val_bpb"]
+            for r in round_records
+        ]
 
-        running_best_x.append(x)
+        if round_values:
+            best = min(best, min(round_values))
+
+        running_best_x.append(round_id)
         running_best_y.append(best)
 
     # ---------------------------------------------
@@ -95,10 +108,10 @@ def plot_results(records, output_path: Path):
     # ---------------------------------------------
     fig, ax = plt.subplots(figsize=(18, 8))
 
-    # Discarded experiments
+    # Discarded
     if discarded_records:
         ax.scatter(
-            [r["iteration"] - 1 for r in discarded_records],
+            [r["round"] for r in discarded_records],
             [r["val_bpb"] for r in discarded_records],
             s=18,
             alpha=0.22,
@@ -107,10 +120,10 @@ def plot_results(records, output_path: Path):
             zorder=2,
         )
 
-    # Kept experiments
+    # Kept
     if kept_records:
         ax.scatter(
-            [r["iteration"] - 1 for r in kept_records],
+            [r["round"] for r in kept_records],
             [r["val_bpb"] for r in kept_records],
             s=55,
             edgecolors="black",
@@ -131,10 +144,10 @@ def plot_results(records, output_path: Path):
     )
 
     # ---------------------------------------------
-    # Annotations for kept experiments
+    # Annotations
     # ---------------------------------------------
     for r in kept_records:
-        x = r["iteration"] - 1
+        x = r["round"]
         y = r["val_bpb"]
 
         description = shorten_description(
@@ -161,12 +174,13 @@ def plot_results(records, output_path: Path):
     # Labels / title
     # ---------------------------------------------
     num_experiments = len(records)
-    num_kept = len([
-        r for r in records
-        if r.get("status") == "keep"
-    ])
 
-    # baseline を improvement 数から除外
+    num_kept = sum(
+        1
+        for r in records
+        if r.get("status") == "keep"
+    )
+
     num_improvements = max(0, num_kept - 1)
 
     ax.set_title(
@@ -177,7 +191,7 @@ def plot_results(records, output_path: Path):
     )
 
     ax.set_xlabel(
-        "Experiment #",
+        "Round",
         fontsize=13,
     )
 
@@ -205,19 +219,28 @@ def plot_results(records, output_path: Path):
         frameon=True,
     )
 
-    # 少し余白をつける
-    values = [r["val_bpb"] for r in valid_records]
+    # round を整数目盛りにする
+    ax.set_xticks(rounds)
+
+    values = [
+        r["val_bpb"]
+        for r in valid_records
+    ]
 
     ymin = min(values)
     ymax = max(values)
-    margin = max((ymax - ymin) * 0.04, 0.0005)
+
+    margin = max(
+        (ymax - ymin) * 0.04,
+        0.0005,
+    )
 
     ax.set_ylim(
         ymin - margin,
         ymax + margin * 3,
     )
 
-    ax.margins(x=0.01)
+    ax.margins(x=0.02)
 
     plt.tight_layout()
 
@@ -257,11 +280,16 @@ def main():
     args = parser.parse_args()
 
     if args.output is None:
-        output_path = args.results.parent / "progress.png"
+        output_path = (
+            args.results.parent
+            / "progress.png"
+        )
     else:
         output_path = args.output
 
-    records = load_results(args.results)
+    records = load_results(
+        args.results
+    )
 
     plot_results(
         records,
