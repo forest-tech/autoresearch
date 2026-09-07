@@ -337,16 +337,22 @@ def make_dataloader(tokenizer, B, T, split, buffer_size=1000):
         yield inputs, targets, epoch
 
 # ---------------------------------------------------------------------------
-# Evaluation (DO NOT CHANGE — this is the fixed metric)
+# Evaluation (fixed validation metrics)
 # ---------------------------------------------------------------------------
 
 @torch.no_grad()
-def evaluate_bpb(model, tokenizer, batch_size):
+def evaluate_metrics(model, tokenizer, batch_size):
     """
-    Bits per byte (BPB): vocab size-independent evaluation metric.
-    Sums per-token cross-entropy (in nats), sums target byte lengths,
-    then converts nats/byte to bits/byte. Special tokens (byte length 0)
-    are excluded from both sums.
+    Compute fixed validation metrics in one model pass.
+
+    ``val_bpb`` is the original vocab-size-independent BPB metric. It sums
+    cross-entropy for non-special targets, divides by their UTF-8 byte count,
+    and converts nats/byte to bits/byte. Its definition is unchanged.
+
+    ``val_loss`` is mean next-token cross-entropy in nats per target token,
+    computed directly over every target in the same fixed validation batches.
+    Unlike BPB it is tokenizer-dependent and includes special-token targets.
+
     Uses fixed MAX_SEQ_LEN so results are comparable across configs.
     """
     token_bytes = get_token_bytes(device="cuda")
@@ -354,6 +360,8 @@ def evaluate_bpb(model, tokenizer, batch_size):
     steps = EVAL_TOKENS // (batch_size * MAX_SEQ_LEN)
     total_nats = 0.0
     total_bytes = 0
+    total_loss_nats = 0.0
+    total_tokens = 0
     for _ in range(steps):
         x, y, _ = next(val_loader)
         loss_flat = model(x, y, reduction='none').view(-1)
@@ -362,7 +370,18 @@ def evaluate_bpb(model, tokenizer, batch_size):
         mask = nbytes > 0
         total_nats += (loss_flat * mask).sum().item()
         total_bytes += nbytes.sum().item()
-    return total_nats / (math.log(2) * total_bytes)
+        total_loss_nats += loss_flat.sum().item()
+        total_tokens += loss_flat.numel()
+    return {
+        "val_bpb": total_nats / (math.log(2) * total_bytes),
+        "val_loss": total_loss_nats / total_tokens,
+    }
+
+
+@torch.no_grad()
+def evaluate_bpb(model, tokenizer, batch_size):
+    """Backward-compatible wrapper for callers that only need validation BPB."""
+    return evaluate_metrics(model, tokenizer, batch_size)["val_bpb"]
 
 # ---------------------------------------------------------------------------
 # Main

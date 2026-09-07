@@ -9,449 +9,114 @@ set -euo pipefail
 
 module load singularity-ce
 
-IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
-WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch
+# Infrastructure, objective, and prompt settings are independent.
+IMAGE="${IMAGE:-/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif}"
+WORKDIR="${WORKDIR:-/home/pj24001974/ku50001532/projects/autoresearch}"
+NUM_ITERATIONS="${NUM_ITERATIONS:-10}"
+PRIMARY_METRIC="${PRIMARY_METRIC:-val_bpb}"
+OBJECTIVE_DIRECTION="${OBJECTIVE_DIRECTION:-min}"
+PROMPT_TEMPLATE="${PROMPT_TEMPLATE:-prompts/candidate_default.txt}"
+HISTORY_MODE="${HISTORY_MODE:-all}"
+HISTORY_LIMIT="${HISTORY_LIMIT:-10}"
 
-NUM_ITERATIONS=10
+if [[ "${PROMPT_TEMPLATE}" != /* ]]; then
+    PROMPT_TEMPLATE="${WORKDIR}/${PROMPT_TEMPLATE}"
+fi
 
 DATE=$(date +%Y%m%d_%H%M%S)
-
 RUN_ROOT="${WORKDIR}/results/${DATE}"
 RESULT_FILE="${RUN_ROOT}/results.jsonl"
-
-RESULT_REL="${RESULT_FILE#${WORKDIR}/}"
-RUN_ROOT_REL="${RUN_ROOT#${WORKDIR}/}"
+RUN_CONFIG="${RUN_ROOT}/run_config.json"
+EXPERIMENT_TOOL="${WORKDIR}/experiment_utils.py"
 
 cd "${WORKDIR}"
 
-# ============================================================
-# helper
-# ============================================================
+experiment_tool() {
+    singularity exec \
+        --bind "${WORKDIR}:${WORKDIR}" \
+        --pwd "${WORKDIR}" \
+        "${IMAGE}" \
+        python "${EXPERIMENT_TOOL}" "$@"
+}
 
-# results.jsonl に1実験を安全に追記する
 append_result() {
-    local iteration="$1"
-    local commit="$2"
-    local val_bpb="$3"
-    local memory_gb="$4"
-    local status="$5"
-    local description="$6"
-    local log="$7"
-    local patch="$8"
-
-    singularity exec \
-        --bind "${WORKDIR}:${WORKDIR}" \
-        --pwd "${WORKDIR}" \
-        "${IMAGE}" \
-        python - \
-        "${RESULT_FILE}" \
-        "${iteration}" \
-        "${commit}" \
-        "${val_bpb}" \
-        "${memory_gb}" \
-        "${status}" \
-        "${description}" \
-        "${log}" \
-        "${patch}" <<'PY'
-import json
-import sys
-
-(
-    result_file,
-    iteration,
-    commit,
-    val_bpb,
-    memory_gb,
-    status,
-    description,
-    log,
-    patch,
-) = sys.argv[1:]
-
-record = {
-    "iteration": int(iteration),
-    "commit": commit if commit else None,
-    "val_bpb": float(val_bpb) if val_bpb else None,
-    "memory_gb": float(memory_gb) if memory_gb else None,
-    "status": status,
-    "description": description,
-    "log": log,
-    "patch": patch,
-}
-
-with open(result_file, "a", encoding="utf-8") as f:
-    json.dump(record, f, ensure_ascii=False)
-    f.write("\n")
-PY
-}
-
-
-# results.jsonl から最後のiterationを取得
-get_last_iteration() {
-    singularity exec \
-        --bind "${WORKDIR}:${WORKDIR}" \
-        "${IMAGE}" \
-        python - "${RESULT_FILE}" <<'PY'
-import json
-import os
-import sys
-
-path = sys.argv[1]
-
-last = 0
-
-if os.path.exists(path):
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            if not line.strip():
-                continue
-
-            record = json.loads(line)
-            last = max(last, record["iteration"])
-
-print(last)
-PY
-}
-
-
-# 現在のbest val_bpbを取得
-get_best_val() {
-    singularity exec \
-        --bind "${WORKDIR}:${WORKDIR}" \
-        "${IMAGE}" \
-        python - "${RESULT_FILE}" <<'PY'
-import json
-import os
-import sys
-
-path = sys.argv[1]
-
-best = None
-
-if os.path.exists(path):
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            if not line.strip():
-                continue
-
-            record = json.loads(line)
-
-            if record.get("status") != "keep":
-                continue
-
-            value = record.get("val_bpb")
-
-            if value is None:
-                continue
-
-            if best is None or value < best:
-                best = value
-
-if best is not None:
-    print(best)
-PY
-}
-
-snapshot_config() {
-    local output_file="$1"
-
-    singularity exec \
-        --bind "${WORKDIR}:${WORKDIR}" \
-        --pwd "${WORKDIR}" \
-        "${IMAGE}" \
-        python - \
-        "${WORKDIR}/train.py" \
-        "${WORKDIR}/prepare.py" \
-        "${output_file}" <<'PY'
-import ast
-import hashlib
-import json
-import operator
-import sys
-
-train_path, prepare_path, output_path = sys.argv[1:]
-
-
-# ------------------------------------------------------------
-# simple Python expression evaluator
-# ------------------------------------------------------------
-
-BIN_OPS = {
-    ast.Add: operator.add,
-    ast.Sub: operator.sub,
-    ast.Mult: operator.mul,
-    ast.Div: operator.truediv,
-    ast.FloorDiv: operator.floordiv,
-    ast.Mod: operator.mod,
-    ast.Pow: operator.pow,
-}
-
-UNARY_OPS = {
-    ast.UAdd: operator.pos,
-    ast.USub: operator.neg,
-}
-
-
-def evaluate(node, env):
-    if isinstance(node, ast.Constant):
-        return node.value
-
-    if isinstance(node, ast.Tuple):
-        return tuple(evaluate(x, env) for x in node.elts)
-
-    if isinstance(node, ast.List):
-        return [evaluate(x, env) for x in node.elts]
-
-    if isinstance(node, ast.Dict):
-        return {
-            evaluate(k, env): evaluate(v, env)
-            for k, v in zip(node.keys, node.values)
-        }
-
-    if isinstance(node, ast.Name):
-        if node.id in env:
-            return env[node.id]
-        raise ValueError(node.id)
-
-    if isinstance(node, ast.BinOp):
-        op = BIN_OPS.get(type(node.op))
-        if op is None:
-            raise ValueError(type(node.op).__name__)
-
-        return op(
-            evaluate(node.left, env),
-            evaluate(node.right, env),
+    local iteration="$1" commit="$2" status="$3" description="$4"
+    local run_result="$5" config_file="$6" prompt_metadata="$7" tag="$8"
+    local base_commit="$9"
+    local -a args=(
+        append-result --results "${RESULT_FILE}"
+        --run-result "${run_result}" --config "${config_file}"
+        --prompt-metadata "${prompt_metadata}" --iteration "${iteration}"
+        --status "${status}" --description "${description}"
+        --primary-metric "${PRIMARY_METRIC}" --direction "${OBJECTIVE_DIRECTION}"
+        --log "results/${DATE}/iter_${tag}/train.log"
+        --patch "results/${DATE}/iter_${tag}/change.patch"
+        --config-artifact "results/${DATE}/iter_${tag}/config.json"
+    )
+    [[ -n "${commit}" ]] && args+=(--commit "${commit}")
+    [[ -n "${base_commit}" ]] && args+=(--base-commit "${base_commit}")
+    if [[ "${prompt_metadata}" != "${RUN_CONFIG}" ]]; then
+        args+=(
+            --prompt "results/${DATE}/iter_${tag}/codex_prompt.txt"
+            --history "results/${DATE}/iter_${tag}/history_context.jsonl"
         )
-
-    if isinstance(node, ast.UnaryOp):
-        op = UNARY_OPS.get(type(node.op))
-        if op is None:
-            raise ValueError(type(node.op).__name__)
-
-        return op(evaluate(node.operand, env))
-
-    raise ValueError(type(node).__name__)
-
-
-# ------------------------------------------------------------
-# Extract "# Hyperparameters" block from train.py
-# ------------------------------------------------------------
-
-with open(train_path, encoding="utf-8") as f:
-    train_source = f.read()
-
-lines = train_source.splitlines()
-
-start_line = None
-end_line = None
-
-for i, line in enumerate(lines, 1):
-    if "Hyperparameters (edit these directly" in line:
-        start_line = i
-
-    if start_line is not None and i > start_line:
-        if "Setup: tokenizer, model, optimizer" in line:
-            end_line = i
-            break
-
-if start_line is None or end_line is None:
-    raise SystemExit(
-        "[ERROR] Hyperparameter section not found in train.py"
-    )
-
-tree = ast.parse(train_source)
-
-hyperparameters = {}
-env = {}
-
-for node in tree.body:
-    if not isinstance(node, (ast.Assign, ast.AnnAssign)):
-        continue
-
-    if not (start_line < node.lineno < end_line):
-        continue
-
-    if isinstance(node, ast.Assign):
-        if len(node.targets) != 1:
-            continue
-
-        target = node.targets[0]
-        value_node = node.value
-
-    else:
-        target = node.target
-        value_node = node.value
-
-    if not isinstance(target, ast.Name):
-        continue
-
-    name = target.id
-
-    if not name.isupper():
-        continue
-
-    try:
-        value = evaluate(value_node, env)
-    except Exception:
-        # Codexが複雑な式を追加した場合も、
-        # 少なくとも式自体は記録する
-        value = {
-            "expression": ast.unparse(value_node)
-        }
-
-    env[name] = value
-    hyperparameters[name] = value
-
-
-# ------------------------------------------------------------
-# Fixed experimental configuration from prepare.py
-# ------------------------------------------------------------
-
-with open(prepare_path, encoding="utf-8") as f:
-    prepare_source = f.read()
-
-prepare_tree = ast.parse(prepare_source)
-prepare_env = {}
-fixed_config = {}
-
-wanted = {
-    "MAX_SEQ_LEN",
-    "TIME_BUDGET",
+    fi
+    experiment_tool "${args[@]}"
 }
 
-for node in prepare_tree.body:
-    if not isinstance(node, ast.Assign):
-        continue
+[[ -d .git ]] || { echo "[ERROR] not a Git repository" >&2; exit 1; }
+[[ -f train.py ]] || { echo "[ERROR] train.py not found" >&2; exit 1; }
+[[ -f "${EXPERIMENT_TOOL}" ]] || { echo "[ERROR] experiment_utils.py not found" >&2; exit 1; }
 
-    if len(node.targets) != 1:
-        continue
-
-    target = node.targets[0]
-
-    if not isinstance(target, ast.Name):
-        continue
-
-    try:
-        value = evaluate(node.value, prepare_env)
-    except Exception:
-        continue
-
-    prepare_env[target.id] = value
-
-    if target.id in wanted:
-        fixed_config[target.id] = value
-
-
-# ------------------------------------------------------------
-# Code fingerprint
-# ------------------------------------------------------------
-
-train_sha256 = hashlib.sha256(
-    train_source.encode("utf-8")
-).hexdigest()
-
-
-record = {
-    "hyperparameters": hyperparameters,
-    "fixed_config": fixed_config,
-    "train_sha256": train_sha256,
-}
-
-
-with open(output_path, "w", encoding="utf-8") as f:
-    json.dump(
-        record,
-        f,
-        ensure_ascii=False,
-        indent=2,
-    )
-    f.write("\n")
-PY
-}
-
-# ============================================================
-# preflight
-# ============================================================
-
-[[ -d .git ]] || {
-    echo "[ERROR] git repositoryではありません"
-    exit 1
-}
-
-[[ -f train.py ]] || {
-    echo "[ERROR] train.py がありません"
-    exit 1
-}
+experiment_tool validate-config \
+    --primary-metric "${PRIMARY_METRIC}" --direction "${OBJECTIVE_DIRECTION}" \
+    --history-mode "${HISTORY_MODE}" --history-limit "${HISTORY_LIMIT}" \
+    --template "${PROMPT_TEMPLATE}"
 
 git diff --quiet && git diff --cached --quiet || {
-    echo "[ERROR] 未commitの変更があります"
+    echo "[ERROR] tracked changes must be committed before a run" >&2
     exit 1
 }
 
 BRANCH=$(git branch --show-current)
-
 case "${BRANCH}" in
-    autoresearch/*)
-        ;;
-    *)
-        echo "[ERROR] autoresearch/* ブランチで実行してください"
-        echo "current branch: ${BRANCH}"
-        exit 1
-        ;;
+    autoresearch/*) ;;
+    *) echo "[ERROR] run on an autoresearch/* branch (current: ${BRANCH})" >&2; exit 1 ;;
 esac
 
 mkdir -p "${RUN_ROOT}"
-
 touch "${RESULT_FILE}"
+experiment_tool validate-jsonl "${RESULT_FILE}"
+experiment_tool write-run-config \
+    --output "${RUN_CONFIG}" --template "${PROMPT_TEMPLATE}" \
+    --history-mode "${HISTORY_MODE}" --history-limit "${HISTORY_LIMIT}" \
+    --primary-metric "${PRIMARY_METRIC}" --direction "${OBJECTIVE_DIRECTION}" \
+    --repo-root "${WORKDIR}"
 
-# JSONLとして壊れていないか確認
-singularity exec \
-    --bind "${WORKDIR}:${WORKDIR}" \
-    "${IMAGE}" \
-    python - "${RESULT_FILE}" <<'PY'
-import json
-import sys
+LAST_ITER=$(experiment_tool last-iteration "${RESULT_FILE}")
+BEST_VAL=$(experiment_tool best "${RESULT_FILE}" \
+    --primary-metric "${PRIMARY_METRIC}" --direction "${OBJECTIVE_DIRECTION}")
 
-path = sys.argv[1]
-
-with open(path, encoding="utf-8") as f:
-    for lineno, line in enumerate(f, 1):
-        if not line.strip():
-            continue
-
-        try:
-            json.loads(line)
-        except json.JSONDecodeError as e:
-            raise SystemExit(
-                f"[ERROR] invalid JSONL at line {lineno}: {e}"
-            )
-PY
-
-LAST_ITER=$(get_last_iteration)
-BEST_VAL=$(get_best_val)
-
-# ============================================================
-# experiment loop
-# ============================================================
+echo "[SETUP] objective=${PRIMARY_METRIC}/${OBJECTIVE_DIRECTION}"
+echo "[SETUP] prompt=${PROMPT_TEMPLATE#${WORKDIR}/} history=${HISTORY_MODE} limit=${HISTORY_LIMIT}"
+echo "[SETUP] results=${RESULT_FILE}"
 
 for n in $(seq 1 "${NUM_ITERATIONS}"); do
-
     ITER=$((LAST_ITER + n))
     TAG=$(printf '%03d' "${ITER}")
-
     ITER_DIR="${RUN_ROOT}/iter_${TAG}"
-
     TRAIN_LOG="${ITER_DIR}/train.log"
     PATCH_FILE="${ITER_DIR}/change.patch"
     CONFIG_FILE="${ITER_DIR}/config.json"
-
+    RUN_RESULT="${ITER_DIR}/run_result.json"
     PROMPT_FILE="${ITER_DIR}/codex_prompt.txt"
+    PROMPT_METADATA="${ITER_DIR}/prompt_metadata.json"
+    HISTORY_FILE="${ITER_DIR}/history_context.jsonl"
     CODEX_MESSAGE="${ITER_DIR}/codex_message.txt"
     CODEX_STDOUT="${ITER_DIR}/codex.stdout"
     CODEX_STDERR="${ITER_DIR}/codex.stderr"
 
     mkdir -p "${ITER_DIR}"
-
     echo
     echo "========================================"
     echo "Iteration ${ITER}"
@@ -459,245 +124,108 @@ for n in $(seq 1 "${NUM_ITERATIONS}"); do
 
     IS_BASELINE=0
     DESCRIPTION="baseline"
-
-    # ========================================================
-    # Candidate generation
-    # ========================================================
+    BASE_COMMIT=$(git rev-parse --short=7 HEAD)
+    RECORD_PROMPT_METADATA="${RUN_CONFIG}"
 
     if [[ -z "${BEST_VAL}" ]]; then
-
         IS_BASELINE=1
         : > "${PATCH_FILE}"
-
         echo "[BASELINE] current train.py"
-
     else
-
-        BASE_COMMIT=$(git rev-parse --short=7 HEAD)
-
-        cat > "${PROMPT_FILE}" <<EOF
-You are preparing exactly one candidate experiment for an autonomous
-LLM training loop on HPC environment.
-
-Current iteration: ${ITER}
-Current accepted commit: ${BASE_COMMIT}
-
-Primary metric:
-val_bpb (lower is better)
-
-Current experiment run directory:
-${RUN_ROOT_REL}
-
-Current experiment history:
-${RESULT_REL}
-
-The shell script owns:
-
-- training execution
-- ${RESULT_REL}
-- keep/discard decisions
-- git commits
-- experiment artifact management
-
-Your task is ONLY to choose the next experiment and edit train.py.
-
-Instructions:
-
-- Read README.md, prepare.py, train.py, and ${RESULT_REL}.
-- Inspect artifacts from the current run under ${RUN_ROOT_REL}/ when useful.
-- Use previous keep/discard results and recorded hyperparameters to avoid repeating unsuccessful experiments.
-- Compare the current accepted configuration with previous candidate configurations when deciding the next experiment.
-- Choose one change that has a plausible chance to lower val_bpb.
-- Prefer one-factor-at-a-time and small/local changes initially.
-- Avoid repeating previous experiments.
-- Edit ONLY train.py.
-- Do NOT run uv run train.py.
-- Do NOT edit prepare.py.
-- Do NOT edit program.md.
-- Do NOT edit ${RESULT_REL}.
-- Do NOT edit files under results/.
-- Do NOT edit scripts.
-- Do NOT modify .git.
-- Do NOT run git commit/reset/checkout/restore.
-- Leave train.py runnable as-is.
-
-Final response:
-output only a short one-line description of the experiment.
-Do not use tabs.
-EOF
+        PREEXISTING_UNTRACKED="${ITER_DIR}/preexisting_untracked.txt"
+        git ls-files --others --exclude-standard | sort -u > "${PREEXISTING_UNTRACKED}"
+        experiment_tool render-prompt \
+            --template "${PROMPT_TEMPLATE}" --results "${RESULT_FILE}" \
+            --output "${PROMPT_FILE}" --history-output "${HISTORY_FILE}" \
+            --metadata-output "${PROMPT_METADATA}" \
+            --history-mode "${HISTORY_MODE}" --history-limit "${HISTORY_LIMIT}" \
+            --primary-metric "${PRIMARY_METRIC}" --direction "${OBJECTIVE_DIRECTION}" \
+            --iteration "${ITER}" --base-commit "${BASE_COMMIT}" \
+            --current-best "${BEST_VAL}" --repo-root "${WORKDIR}"
+        RECORD_PROMPT_METADATA="${PROMPT_METADATA}"
 
         echo "[CODEX] generating candidate"
-
         if ! singularity exec \
-            --bind "${WORKDIR}:${WORKDIR}" \
-            --pwd "${WORKDIR}" \
-            "${IMAGE}" \
+            --bind "${WORKDIR}:${WORKDIR}" --pwd "${WORKDIR}" "${IMAGE}" \
             bash -lc \
-            "codex exec \
-                --sandbox danger-full-access \
-                --skip-git-repo-check \
-                -o '${CODEX_MESSAGE}' \
-                - < '${PROMPT_FILE}'" \
-            >"${CODEX_STDOUT}" \
-            2>"${CODEX_STDERR}"
+            "codex exec --sandbox danger-full-access --skip-git-repo-check -o '${CODEX_MESSAGE}' - < '${PROMPT_FILE}'" \
+            >"${CODEX_STDOUT}" 2>"${CODEX_STDERR}"
         then
-            echo "[ERROR] Codex failed"
-            git restore --worktree -- .
+            echo "[ERROR] Codex failed" >&2
+            git restore --worktree -- train.py
             exit 1
         fi
 
-        CHANGED=$(git diff --name-only)
-
-        if [[ "${CHANGED}" != "train.py" ]]; then
-            echo "[ERROR] Codex modified unexpected files:"
-            printf '%s\n' "${CHANGED}"
-
-            git restore --worktree -- .
-            exit 1
-        fi
-
-        git diff -- train.py > "${PATCH_FILE}"
-
-        DESCRIPTION=$(
-            tr '\t\r\n' '   ' < "${CODEX_MESSAGE}" \
-            | tr -s ' ' \
-            | sed 's/^ //; s/ $//'
+        NEW_UNTRACKED=$(comm -13 "${PREEXISTING_UNTRACKED}" <(git ls-files --others --exclude-standard | sort -u))
+        CHANGED=$(
+            printf '%s\n%s\n%s\n' \
+                "$(git diff --name-only)" \
+                "$(git diff --cached --name-only)" \
+                "${NEW_UNTRACKED}" \
+            | sed '/^$/d' | sort -u
         )
+        if [[ "${CHANGED}" != "train.py" ]] || git diff --quiet -- train.py; then
+            echo "[ERROR] Codex must leave only an unstaged train.py change" >&2
+            printf '%s\n' "${CHANGED}" >&2
+            git restore --staged --worktree -- .
+            exit 1
+        fi
 
-        [[ -n "${DESCRIPTION}" ]] \
-            || DESCRIPTION="candidate change"
-
+        git diff --binary -- train.py > "${PATCH_FILE}"
+        DESCRIPTION=$(tr '\t\r\n' '   ' < "${CODEX_MESSAGE}" | tr -s ' ' | sed 's/^ //; s/ $//')
+        [[ -n "${DESCRIPTION}" ]] || DESCRIPTION="candidate change"
     fi
 
-    # ========================================================
-    # Snapshot experiment configuration
-    # ========================================================
-
-    echo "[CONFIG] snapshotting experiment configuration"
-
-    snapshot_config "${CONFIG_FILE}"
-
-    # ========================================================
-    # Training
-    # ========================================================
+    experiment_tool snapshot-config \
+        --train "${WORKDIR}/train.py" --prepare "${WORKDIR}/prepare.py" \
+        --output "${CONFIG_FILE}"
 
     echo "[TRAIN] starting"
-
     TRAIN_EXIT=0
-
     timeout 600 singularity exec \
-        --nv \
-        --bind "${WORKDIR}:${WORKDIR}" \
-        --pwd "${WORKDIR}" \
-        "${IMAGE}" \
-        bash -lc "uv run train.py" \
-        >"${TRAIN_LOG}" 2>&1 \
-        || TRAIN_EXIT=$?
+        --nv --bind "${WORKDIR}:${WORKDIR}" --pwd "${WORKDIR}" "${IMAGE}" \
+        bash -lc "uv run train.py" >"${TRAIN_LOG}" 2>&1 || TRAIN_EXIT=$?
 
-    # ========================================================
-    # Result extraction
-    # ========================================================
+    experiment_tool write-run-result \
+        --log "${TRAIN_LOG}" --output "${RUN_RESULT}" --train-exit "${TRAIN_EXIT}" \
+        --primary-metric "${PRIMARY_METRIC}" --direction "${OBJECTIVE_DIRECTION}"
+    OBJECTIVE_VALUE=$(experiment_tool value "${RUN_RESULT}" --metric "${PRIMARY_METRIC}")
 
-    VAL_BPB=$(
-        awk '/^val_bpb:/ {v=$2} END {print v}' \
-        "${TRAIN_LOG}"
-    )
-
-    PEAK_VRAM_MB=$(
-        awk '/^peak_vram_mb:/ {v=$2} END {print v}' \
-        "${TRAIN_LOG}"
-    )
-
-    # ========================================================
-    # Crash
-    # ========================================================
-
-    if [[ ${TRAIN_EXIT} -ne 0 || -z "${VAL_BPB}" ]]; then
-
-        echo "[TRAIN] failed (exit=${TRAIN_EXIT})"
-
-        append_result \
-            "${ITER}" \
-            "" \
-            "" \
-            "" \
-            "crash" \
-            "${DESCRIPTION}" \
-            "results/iter_${TAG}/train.log" \
-            "results/iter_${TAG}/change.patch"
-
+    if [[ ${TRAIN_EXIT} -ne 0 || -z "${OBJECTIVE_VALUE}" ]]; then
+        echo "[TRAIN] failed or did not emit ${PRIMARY_METRIC} (exit=${TRAIN_EXIT})"
+        append_result "${ITER}" "" "crash" "${DESCRIPTION}" "${RUN_RESULT}" \
+            "${CONFIG_FILE}" "${RECORD_PROMPT_METADATA}" "${TAG}" "${BASE_COMMIT}"
         if [[ ${IS_BASELINE} -eq 0 ]]; then
             git restore --worktree -- train.py
             continue
         fi
-
-        echo "[ERROR] baseline failed"
+        echo "[ERROR] baseline failed" >&2
         exit 1
     fi
 
-    MEMORY_GB=$(
-        awk -v mb="${PEAK_VRAM_MB:-0}" \
-            'BEGIN {printf "%.1f", mb/1024}'
-    )
-
-    # ========================================================
-    # keep / discard
-    # ========================================================
-
     if [[ ${IS_BASELINE} -eq 1 ]]; then
-
         STATUS="keep"
-        COMMIT=$(git rev-parse --short=7 HEAD)
-        BEST_VAL="${VAL_BPB}"
-
-    elif awk \
-        -v v="${VAL_BPB}" \
-        -v b="${BEST_VAL}" \
-        'BEGIN {exit !(v < b)}'
-    then
-
+        COMMIT="${BASE_COMMIT}"
+        BEST_VAL="${OBJECTIVE_VALUE}"
+    elif experiment_tool compare "${OBJECTIVE_VALUE}" "${BEST_VAL}" --direction "${OBJECTIVE_DIRECTION}"; then
         STATUS="keep"
-
         git add train.py
-        git commit \
-            -m "experiment: iter ${ITER} val_bpb=${VAL_BPB}" \
-            >/dev/null
-
+        git commit -m "experiment: iter ${ITER} ${PRIMARY_METRIC}=${OBJECTIVE_VALUE}" >/dev/null
         COMMIT=$(git rev-parse --short=7 HEAD)
-        BEST_VAL="${VAL_BPB}"
-
+        BEST_VAL="${OBJECTIVE_VALUE}"
     else
-
         STATUS="discard"
         COMMIT=""
-
         git restore --worktree -- train.py
-
     fi
 
-    # ========================================================
-    # results.jsonl
-    # ========================================================
-
-    append_result \
-        "${ITER}" \
-        "${COMMIT}" \
-        "${VAL_BPB}" \
-        "${MEMORY_GB}" \
-        "${STATUS}" \
-        "${DESCRIPTION}" \
-        "results/iter_${TAG}/train.log" \
-        "results/iter_${TAG}/change.patch"
-
-    echo "[RESULT] val_bpb=${VAL_BPB}"
-    echo "[RESULT] memory=${MEMORY_GB} GB"
-    echo "[RESULT] status=${STATUS}"
-    echo "[BEST]   val_bpb=${BEST_VAL}"
-
+    append_result "${ITER}" "${COMMIT}" "${STATUS}" "${DESCRIPTION}" "${RUN_RESULT}" \
+        "${CONFIG_FILE}" "${RECORD_PROMPT_METADATA}" "${TAG}" "${BASE_COMMIT}"
+    echo "[RESULT] ${PRIMARY_METRIC}=${OBJECTIVE_VALUE} status=${STATUS}"
+    echo "[BEST]   ${PRIMARY_METRIC}=${BEST_VAL} (${OBJECTIVE_DIRECTION})"
 done
 
 echo
-echo "========================================"
 echo "Finished ${NUM_ITERATIONS} experiments"
+echo "Best ${PRIMARY_METRIC}: ${BEST_VAL} (${OBJECTIVE_DIRECTION})"
 echo "Results: ${RESULT_FILE}"
-echo "========================================"

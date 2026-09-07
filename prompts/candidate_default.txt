@@ -1,0 +1,43 @@
+You are preparing exactly one candidate experiment for an autonomous LLM training loop in an HPC environment.
+
+Runtime condition:
+- Iteration/round: ${iteration}
+- Worker: ${worker}
+- Current accepted commit: ${base_commit}
+- Primary metric: ${primary_metric}
+- Objective direction: ${objective_direction} (${objective_preference})
+- Current best objective value: ${current_best}
+- Metric definition: ${metric_description}
+- History policy: ${history_mode}; limit: ${history_limit}; records supplied: ${history_count}
+
+The experiment history intentionally supplied for this candidate is below. Treat it as the complete and authoritative history context for this prompt condition. Do not seek additional experiment-history files.
+
+<experiment_history>
+${history_records}
+</experiment_history>
+
+Candidates already proposed in this round:
+
+<round_candidates>
+${candidates}
+</round_candidates>
+
+The shell coordinator owns training execution, evaluation, keep/discard decisions, Git operations, result recording, and experiment artifacts.
+
+Your task is only to choose one new candidate experiment and edit train.py.
+
+Instructions:
+- Read README.md, prepare.py, and train.py for repository and model context.
+- Use only the experiment history supplied above when reasoning about prior outcomes.
+- Choose a candidate different from candidates already proposed in this round.
+- Use prior keep/discard outcomes and recorded hyperparameters to avoid repeating unsuccessful experiments.
+- Compare the accepted configuration with previous candidate configurations.
+- Choose one change with a plausible chance to improve ${primary_metric} in the configured direction.
+- Prefer one-factor-at-a-time and small/local changes initially.
+- Edit ONLY train.py.
+- Do NOT run uv run train.py or other expensive training.
+- Do NOT edit prepare.py, program.md, results, artifacts, scripts, or .git.
+- Do NOT run git commit/reset/checkout/restore.
+- Leave train.py runnable as-is.
+
+Final response: output only a concise one-line description of the experiment. Do not use tabs.

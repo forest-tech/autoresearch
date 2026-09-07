@@ -15,6 +15,7 @@ module load singularity-ce
 
 IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
 WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch
+METRIC="${METRIC:-val_bpb}"
 
 # =========================
 # 引数チェック
@@ -57,7 +58,7 @@ singularity exec \
     --pwd "${WORKDIR}" \
     "${IMAGE}" \
     bash -lc "
-        uv run python script/plot_results.py '${RESULT_FILE}'
+        uv run python plot_results.py '${RESULT_FILE}' --metric '${METRIC}'
     "
 
 echo

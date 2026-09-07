@@ -14,7 +14,7 @@ The repo is deliberately kept small and only really has three files that matter:
 - **`train.py`** — the single file the agent edits. Contains the full GPT model, optimizer (Muon + AdamW), and training loop. Everything is fair game: architecture, hyperparameters, optimizer, batch size, etc. **This file is edited and iterated on by the agent**.
 - **`program.md`** — baseline instructions for one agent. Point your agent here and let it go. **This file is edited and iterated on by the human**.
 
-By design, training runs for a **fixed 5-minute time budget** (wall clock, excluding startup/compilation), regardless of the details of your compute. The metric is **val_bpb** (validation bits per byte) — lower is better, and vocab-size-independent so architectural changes are fairly compared.
+By design, training runs for a **fixed 5-minute time budget** (wall clock, excluding startup/compilation), regardless of the details of your compute. The default objective is **val_bpb** (validation bits per byte) — lower is better, and vocab-size-independent so architectural changes are fairly compared. The autonomous HPC loops can alternatively select another emitted evaluation metric, such as validation loss.
 
 If you are new to neural networks, this ["Dummy's Guide"](https://x.com/hooeem/status/2030720614752039185) looks pretty good for a lot more context.
 
@@ -49,18 +49,46 @@ Hi have a look at program.md and let's kick off a new experiment! let's do the s
 
 The `program.md` file is essentially a super lightweight "skill".
 
+## Configurable autonomous experiments
+
+The HPC orchestration scripts separate training changes, objective selection, and candidate-prompt/history conditions. Their defaults preserve BPB minimization, the default prompt, and full run history.
+
+```bash
+# val_bpb + full history (explicit defaults)
+PRIMARY_METRIC=val_bpb OBJECTIVE_DIRECTION=min HISTORY_MODE=all \
+  bash script/genkai/loop_for_codex.sh
+
+# val_loss + full history
+PRIMARY_METRIC=val_loss OBJECTIVE_DIRECTION=min HISTORY_MODE=all \
+  bash script/genkai/loop_for_codex.sh
+
+# val_bpb + only the most recent 10 completed records
+PRIMARY_METRIC=val_bpb OBJECTIVE_DIRECTION=min \
+  HISTORY_MODE=recent HISTORY_LIMIT=10 \
+  bash script/genkai/loop_for_codex.sh
+
+# val_bpb + an alternative candidate-generation prompt
+PRIMARY_METRIC=val_bpb OBJECTIVE_DIRECTION=min HISTORY_MODE=all \
+  PROMPT_TEMPLATE=prompts/candidate_exploratory.txt \
+  bash script/genkai/loop_for_codex.sh
+```
+
+The same variables configure `script/genkai/parallel_loop_for_codex.sh`. See [docs/experiment-infrastructure.md](docs/experiment-infrastructure.md) for metric definitions, the JSONL schema, prompt template variables, and extension instructions.
+
 ## Project structure
 
 ```
-prepare.py      — constants, data prep + runtime utilities (do not modify)
+prepare.py      — constants, data prep + fixed validation evaluators (do not modify in candidate runs)
 train.py        — model, optimizer, training loop (agent modifies this)
 program.md      — agent instructions
+experiment_utils.py — objective/result/prompt protocol used by autonomous loops
+prompts/        — replaceable candidate-generation templates
 pyproject.toml  — dependencies
 ```
 
 ## Design choices
 
-- **Single file to modify.** The agent only touches `train.py`. This keeps the scope manageable and diffs reviewable.
+- **Single file to modify per candidate.** The candidate-generating agent only touches `train.py`. Experiment infrastructure and fixed evaluation live outside that candidate scope.
 - **Fixed time budget.** Training always runs for exactly 5 minutes, regardless of your specific platform. This means you can expect approx 12 experiments/hour and approx 100 experiments while you sleep. There are two upsides of this design decision. First, this makes experiments directly comparable regardless of what the agent changes (model size, batch size, architecture, etc). Second, this means that autoresearch will find the most optimal model for your platform in that time budget. The downside is that your runs (and results) become not comparable to other people running on other compute platforms.
 - **Self-contained.** No external dependencies beyond PyTorch and a few small packages. No distributed training, no complex configs. One GPU, one file, one metric.
 

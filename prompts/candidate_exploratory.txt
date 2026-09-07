@@ -1,0 +1,20 @@
+Propose exactly one exploratory candidate for the autonomous LLM training experiment described below.
+
+Condition: iteration ${iteration}, worker ${worker}, accepted commit ${base_commit}.
+Optimize ${primary_metric} with direction=${objective_direction} (${objective_preference}); best=${current_best}.
+Metric definition: ${metric_description}
+History condition: ${history_mode}, limit=${history_limit}, supplied=${history_count} records.
+
+Only this history is supplied for the experiment condition; treat it as complete and do not seek other history files:
+<experiment_history>
+${history_records}
+</experiment_history>
+
+Avoid duplicating these candidates from the current round:
+<round_candidates>
+${candidates}
+</round_candidates>
+
+Seek a well-motivated change that explores a meaningfully different hypothesis, while changing one coherent factor so its effect remains interpretable. Read README.md, prepare.py, and train.py, then edit ONLY train.py. Do not run training. Do not edit evaluation, orchestration, results, artifacts, scripts, program.md, or Git state. The shell coordinator alone runs training, evaluates, selects, commits, and records results.
+
+Return only a concise one-line description without tabs.
