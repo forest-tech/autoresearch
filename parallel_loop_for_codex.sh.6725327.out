@@ -1,0 +1,5 @@
+[SETUP] objective=val_bpb/min
+[SETUP] prompt=prompts/candidate_default.txt history=all limit=10
+[SETUP] GPUs=4 results=/home/pj24001974/ku50001532/projects/autoresearch/results/20260908_043949/results.jsonl
+Preparing worktree (detached HEAD 5f13d29)
+[ERROR] baseline failed or did not emit val_bpb
