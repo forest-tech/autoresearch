@@ -15,6 +15,9 @@ WORKER_SCRIPT="${WORKDIR}/script/genkai/worker.sh"
 NUM_ROUNDS="${NUM_ROUNDS:-10}"
 NUM_WORKERS="${NUM_WORKERS:-4}"
 
+CODEX_MODEL="${CODEX_MODEL:-gpt-5.6-sol}"
+CODEX_REASONING_EFFORT="${CODEX_REASONING_EFFORT:-medium}"
+
 PRIMARY_METRIC="${PRIMARY_METRIC:-val_bpb}"
 OBJECTIVE_DIRECTION="${OBJECTIVE_DIRECTION:-min}"
 PROMPT_TEMPLATE="${PROMPT_TEMPLATE:-prompts/candidate_default.txt}"
@@ -116,7 +119,13 @@ generate_candidate() {
     if ! singularity exec \
         --bind "${WORKDIR}:${WORKDIR}" --pwd "${wt}" "${IMAGE}" \
         bash -lc \
-        "codex exec --sandbox danger-full-access --skip-git-repo-check -o '${codex_message}' - < '${prompt_file}'" \
+        "codex exec \
+            --model '${CODEX_MODEL}' \
+            -c 'model_reasoning_effort=${CODEX_REASONING_EFFORT}' \
+            --sandbox danger-full-access \
+            --skip-git-repo-check \
+            -o '${codex_message}' \
+            - < '${prompt_file}'" \
         >"${codex_stdout}" 2>"${codex_stderr}"
     then
         echo "[ERROR] Codex failed: round=${round} worker=${worker}" >&2
