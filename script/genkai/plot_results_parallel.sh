@@ -12,12 +12,13 @@ module load singularity-ce
 # =========================
 # 設定
 # =========================
+RESULT_FILE="./results/20260909_155301/results.jsonl"
+METRIC=val_loss
+OUTPUT_FILE="./progress_parallel_val_loss.png"
 
 IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
 WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch
 METRIC="${METRIC:-val_bpb}"
-
-RESULT_FILE="./results/20260904_132522/results.jsonl"
 
 # 絶対パスに変換
 if [[ "${RESULT_FILE}" != /* ]]; then
@@ -45,7 +46,7 @@ singularity exec \
     --pwd "${WORKDIR}" \
     "${IMAGE}" \
     bash -lc "
-        uv run plot_results_parallel.py '${RESULT_FILE}' --metric '${METRIC}' -o ./progress_parallel.png
+        uv run plot_results_parallel.py '${RESULT_FILE}' --metric '${METRIC}' -o '${OUTPUT_FILE}'
     "
 
 echo
