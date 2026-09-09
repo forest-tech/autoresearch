@@ -15,7 +15,7 @@ PRIMARY_METRIC=val_loss
 IMAGE="${IMAGE:-/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif}"
 WORKDIR="${WORKDIR:-/home/pj24001974/ku50001532/projects/autoresearch}"
 WORKER_SCRIPT="${WORKDIR}/script/genkai/worker.sh"
-NUM_ROUNDS="${NUM_ROUNDS:-10}"
+NUM_ROUNDS="${NUM_ROUNDS:-2}"
 NUM_WORKERS="${NUM_WORKERS:-4}"
 
 PRIMARY_METRIC="${PRIMARY_METRIC:-val_bpb}"
