@@ -12,9 +12,10 @@ module load singularity-ce
 # =========================
 # 設定
 # =========================
-RESULT_FILE="./results/20260909_155301/results.jsonl"
+EXP_DIR="20260909_201352"
+RESULT_FILE="./results/${EXP_DIR}/results.jsonl"
 METRIC=val_loss
-OUTPUT_FILE="./progress_parallel_val_loss.png"
+OUTPUT_FILE="./progress_parallel_${EXP_DIR}.png"
 
 IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
 WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch
@@ -52,4 +53,4 @@ singularity exec \
 echo
 echo "Done."
 echo "Output:"
-echo "  $(dirname "${RESULT_FILE}")/progress_parallel.png"
+echo "  ${OUTPUT_FILE}"
