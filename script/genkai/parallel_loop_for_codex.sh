@@ -9,6 +9,11 @@ set -euo pipefail
 
 module load singularity-ce
 
+# =========================
+# custom
+# =========================
+
+# -------------------------
 IMAGE="${IMAGE:-/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif}"
 WORKDIR="${WORKDIR:-/home/pj24001974/ku50001532/projects/autoresearch}"
 WORKER_SCRIPT="${WORKDIR}/script/genkai/worker.sh"
@@ -42,7 +47,7 @@ experiment_tool() {
         --bind "${WORKDIR}:${WORKDIR}" \
         --pwd "${WORKDIR}" \
         "${IMAGE}" \
-        python "${EXPERIMENT_TOOL}" "$@"
+        bash -lc "uv run '${EXPERIMENT_TOOL}' '$@'"
 }
 
 declare -a ACTIVE_WORKTREES=()
