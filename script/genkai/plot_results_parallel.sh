@@ -12,12 +12,12 @@ module load singularity-ce
 # =========================
 # 設定
 # =========================
-EXP_DIR="20260909_155301"
+EXP_DIR="20260911_072647"
 RESULT_FILE="./results/${EXP_DIR}/results.jsonl"
 OUTPUT_FILE="./results/${EXP_DIR}/progress.png"
 
 IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
-WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch
+WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch-history-1-test
 METRIC="${METRIC:-val_bpb}"
 
 # 絶対パスに変換
