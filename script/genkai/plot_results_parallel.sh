@@ -14,7 +14,7 @@ module load singularity-ce
 # =========================
 EXP_DIR="20260909_155301"
 RESULT_FILE="./results/${EXP_DIR}/results.jsonl"
-OUTPUT_FILE="./progress_parallel_${EXP_DIR}.png"
+OUTPUT_FILE="./results/${EXP_DIR}/progress.png"
 
 IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
 WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch
@@ -52,4 +52,4 @@ singularity exec \
 echo
 echo "Done."
 echo "Output:"
-echo "  $(dirname "${RESULT_FILE}")/progress_parallel.png"
+echo "  ${OUTPUT_FILE}"

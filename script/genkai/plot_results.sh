@@ -12,25 +12,13 @@ module load singularity-ce
 # =========================
 # 設定
 # =========================
+EXP_DIR="20260909_155301"
+RESULT_FILE="./results/${EXP_DIR}/results.jsonl"
+OUTPUT_FILE="./results/${EXP_DIR}/progress.png"
 
 IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
 WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch
 METRIC="${METRIC:-val_bpb}"
-
-# =========================
-# 引数チェック
-# =========================
-
-if [ $# -lt 1 ]; then
-    echo "Usage:"
-    echo "  pjsub $0 <results.jsonl>"
-    echo
-    echo "Example:"
-    echo "  pjsub $0 results/20260828_192954/results.jsonl"
-    exit 1
-fi
-
-RESULT_FILE="$1"
 
 # 絶対パスに変換
 if [[ "${RESULT_FILE}" != /* ]]; then
@@ -64,4 +52,4 @@ singularity exec \
 echo
 echo "Done."
 echo "Output:"
-echo "  $(dirname "${RESULT_FILE}")/progress.png"
+echo "  ${OUTPUT_FILE}"
