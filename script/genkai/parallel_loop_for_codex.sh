@@ -1,6 +1,6 @@
 #!/bin/bash
-#PJM -L rscgrp=c-batch
-#PJM -L gpu=8
+#PJM -L rscgrp=b-batch
+#PJM -L node=1
 #PJM -L elapse=02:00:00
 #PJM -L jobenv=singularity
 #PJM -j
@@ -12,9 +12,8 @@ module load singularity-ce
 # =========================
 # custom
 # =========================
-NUM_WORKERS="8"
 
-
+# -------------------------
 IMAGE="${IMAGE:-/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif}"
 WORKDIR="${WORKDIR:-/home/pj24001974/ku50001532/projects/autoresearch}"
 WORKER_SCRIPT="${WORKDIR}/script/genkai/worker.sh"
