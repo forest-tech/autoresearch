@@ -12,7 +12,7 @@ module load singularity-ce
 # =========================
 # custom
 # =========================
-WORKDIR="/home/pj24001974/ku50001532/projects/autoresearch-history-1"
+WORKDIR="/home/pj24001974/ku50001532/projects/autoresearch-history-10"
 HISTORY_MODE="recent"
 HISTORY_LIMIT="1"
 # -------------------------
