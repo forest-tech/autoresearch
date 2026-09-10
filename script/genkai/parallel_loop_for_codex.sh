@@ -12,7 +12,7 @@ module load singularity-ce
 # =========================
 # custom
 # =========================
-
+WORKDIR="/home/pj24001974/ku50001532/projects/autoresearch-history-1"
 # -------------------------
 IMAGE="${IMAGE:-/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif}"
 WORKDIR="${WORKDIR:-/home/pj24001974/ku50001532/projects/autoresearch}"
