@@ -32,7 +32,7 @@ experiment_tool() {
         --bind "${REPO_ROOT}:${REPO_ROOT}" \
         --pwd "${WORKTREE}" \
         "${IMAGE}" \
-        bash -lc "uv run '${EXPERIMENT_TOOL}' '$@'"
+        bash -lc 'uv run "$@"' _ "${EXPERIMENT_TOOL}" "$@"
 }
 
 echo "[WORKER ${WORKER_ID}] snapshot config"
