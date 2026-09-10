@@ -14,7 +14,7 @@ module load singularity-ce
 # =========================
 WORKDIR="/home/pj24001974/ku50001532/projects/autoresearch-history-10"
 HISTORY_MODE="recent"
-HISTORY_LIMIT="1"
+HISTORY_LIMIT="10"
 # -------------------------
 IMAGE="${IMAGE:-/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif}"
 WORKDIR="${WORKDIR:-/home/pj24001974/ku50001532/projects/autoresearch}"
