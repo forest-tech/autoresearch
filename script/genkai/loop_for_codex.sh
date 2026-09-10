@@ -36,7 +36,7 @@ experiment_tool() {
         --bind "${WORKDIR}:${WORKDIR}" \
         --pwd "${WORKDIR}" \
         "${IMAGE}" \
-        python "${EXPERIMENT_TOOL}" "$@"
+        bash -lc 'uv run "$@"' _ "${EXPERIMENT_TOOL}" "$@"
 }
 
 append_result() {

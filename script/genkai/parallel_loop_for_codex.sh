@@ -49,7 +49,7 @@ experiment_tool() {
         --bind "${WORKDIR}:${WORKDIR}" \
         --pwd "${WORKDIR}" \
         "${IMAGE}" \
-        bash -lc "uv run '${EXPERIMENT_TOOL}' '$@'"
+        bash -lc 'uv run "$@"' _ "${EXPERIMENT_TOOL}" "$@"
 }
 
 declare -a ACTIVE_WORKTREES=()
