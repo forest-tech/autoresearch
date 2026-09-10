@@ -28,7 +28,7 @@ if [[ "${PROMPT_TEMPLATE}" != /* ]]; then
     PROMPT_TEMPLATE="${WORKDIR}/${PROMPT_TEMPLATE}"
 fi
 
-DATE=$(date +%Y%m%d_%H%M%S)
+DATE=${DATE:-$(date +%Y%m%d_%H%M%S)}
 RUN_ROOT="${WORKDIR}/results/${DATE}"
 RESULT_FILE="${RUN_ROOT}/results.jsonl"
 RUN_CONFIG="${RUN_ROOT}/run_config.json"
