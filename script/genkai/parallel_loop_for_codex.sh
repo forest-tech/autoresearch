@@ -48,7 +48,7 @@ experiment_tool() {
         --bind "${WORKDIR}:${WORKDIR}" \
         --pwd "${WORKDIR}" \
         "${IMAGE}" \
-        python "${EXPERIMENT_TOOL}" "$@"
+        uv run "${EXPERIMENT_TOOL}" "$@"
 }
 
 declare -a ACTIVE_WORKTREES=()
