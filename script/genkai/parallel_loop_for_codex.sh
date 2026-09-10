@@ -157,7 +157,7 @@ generate_candidate() {
     printf 'worker %s: %s\n' "${worker}" "${description}" >> "${candidates_file}"
 }
 
-[[ -d .git ]] || { echo "[ERROR] not a Git repository" >&2; exit 1; }
+[[ -e .git ]] || { echo "[ERROR] not a Git repository" >&2; exit 1; }
 [[ -f train.py ]] || { echo "[ERROR] train.py not found" >&2; exit 1; }
 [[ -f "${WORKER_SCRIPT}" ]] || { echo "[ERROR] worker script not found: ${WORKER_SCRIPT}" >&2; exit 1; }
 [[ -f "${EXPERIMENT_TOOL}" ]] || { echo "[ERROR] experiment_utils.py not found" >&2; exit 1; }
