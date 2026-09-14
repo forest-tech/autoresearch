@@ -56,26 +56,26 @@ The HPC orchestration scripts separate training changes, objective selection, an
 ```bash
 # val_bpb + full history (explicit defaults)
 PRIMARY_METRIC=val_bpb OBJECTIVE_DIRECTION=min HISTORY_MODE=all \
-  bash script/genkai/loop_for_codex.sh
+  bash scripts/genkai/loop_for_codex.sh
 
 # val_loss + full history
 PRIMARY_METRIC=val_loss OBJECTIVE_DIRECTION=min HISTORY_MODE=all \
-  bash script/genkai/loop_for_codex.sh
+  bash scripts/genkai/loop_for_codex.sh
 
 # val_bpb + only the most recent 10 completed records
 PRIMARY_METRIC=val_bpb OBJECTIVE_DIRECTION=min \
   HISTORY_MODE=recent HISTORY_LIMIT=10 \
-  bash script/genkai/loop_for_codex.sh
+  bash scripts/genkai/loop_for_codex.sh
 
 # val_bpb + an alternative candidate-generation prompt
 PRIMARY_METRIC=val_bpb OBJECTIVE_DIRECTION=min HISTORY_MODE=all \
   PROMPT_TEMPLATE=prompts/candidate_exploratory.txt \
-  bash script/genkai/loop_for_codex.sh
+  bash scripts/genkai/loop_for_codex.sh
 ```
 
-Genkai experiment results are saved in `~/experiments/autoresearch/EXP_NAME/DATE/`. `EXP_NAME` defaults to `unnamed`; set it at execution time to name an experiment, for example `EXP_NAME=my-experiment bash script/genkai/loop_for_codex.sh`. `DATE` is generated automatically. For plotting, set `EXP_NAME` and edit `DATE` inside `script/genkai/plot_results.sh` or `script/genkai/plot_results_parallel.sh` to select the run.
+Genkai experiment results are saved in `~/experiments/autoresearch/EXP_NAME/DATE/`. `EXP_NAME` defaults to `unnamed`; set it at execution time to name an experiment, for example `EXP_NAME=my-experiment bash scripts/genkai/loop_for_codex.sh`. `DATE` is generated automatically. For plotting, set `EXP_NAME` and edit `DATE` inside `scripts/genkai/plot_results.sh` or `scripts/genkai/plot_results_parallel.sh` to select the run.
 
-The same variables configure `script/genkai/parallel_loop_for_codex.sh`. See [docs/experiment-infrastructure.md](docs/experiment-infrastructure.md) for metric definitions, the JSONL schema, prompt template variables, and extension instructions.
+The same variables configure `scripts/genkai/parallel_loop_for_codex.sh`. See [docs/experiment-infrastructure.md](docs/experiment-infrastructure.md) for metric definitions, the JSONL schema, prompt template variables, and extension instructions.
 
 ## Project structure
 

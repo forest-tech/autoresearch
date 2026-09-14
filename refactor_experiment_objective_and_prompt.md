@@ -29,7 +29,7 @@ At minimum, read:
 * program.md
 * prepare.py
 * train.py
-* script/genkai/loop_for_codex.sh
+* scripts/genkai/loop_for_codex.sh
 * plot_results.py
 * plot_results_parallel.py, if relevant
 * existing results.jsonl files or examples, if available
@@ -463,4 +463,3 @@ When the implementation is finished, give a concise but complete report containi
 10. Any remaining limitations or decisions I should know about
 
 Do not merely tell me what could be implemented. Complete the implementation first.
-

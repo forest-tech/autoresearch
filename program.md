@@ -3,8 +3,8 @@
 This is an experiment to have the LLM do its own research.
 
 > This file describes the original manual, BPB-only agent workflow. Configurable
-> objective and prompt/history experiments use `script/genkai/loop_for_codex.sh`
-> or `script/genkai/parallel_loop_for_codex.sh`; see
+> objective and prompt/history experiments use `scripts/genkai/loop_for_codex.sh`
+> or `scripts/genkai/parallel_loop_for_codex.sh`; see
 > `docs/experiment-infrastructure.md`.
 
 ## Setup

@@ -15,24 +15,24 @@ Defaults are `PRIMARY_METRIC=val_bpb`, `OBJECTIVE_DIRECTION=min`, `PROMPT_TEMPLA
 ```bash
 # 1. Default BPB optimization with full history
 PRIMARY_METRIC=val_bpb OBJECTIVE_DIRECTION=min HISTORY_MODE=all \
-  bash script/genkai/loop_for_codex.sh
+  bash scripts/genkai/loop_for_codex.sh
 
 # 2. Validation-loss optimization with full history
 PRIMARY_METRIC=val_loss OBJECTIVE_DIRECTION=min HISTORY_MODE=all \
-  bash script/genkai/loop_for_codex.sh
+  bash scripts/genkai/loop_for_codex.sh
 
 # 3. BPB optimization with recent-10 history
 PRIMARY_METRIC=val_bpb OBJECTIVE_DIRECTION=min \
   HISTORY_MODE=recent HISTORY_LIMIT=10 \
-  bash script/genkai/loop_for_codex.sh
+  bash scripts/genkai/loop_for_codex.sh
 
 # 4. BPB optimization with the included exploratory prompt
 PRIMARY_METRIC=val_bpb OBJECTIVE_DIRECTION=min HISTORY_MODE=all \
   PROMPT_TEMPLATE=prompts/candidate_exploratory.txt \
-  bash script/genkai/loop_for_codex.sh
+  bash scripts/genkai/loop_for_codex.sh
 ```
 
-Use `script/genkai/parallel_loop_for_codex.sh` in the same commands for parallel best-of-N rounds. Existing `IMAGE`, `WORKDIR`, `NUM_ITERATIONS`, `NUM_ROUNDS`, and `NUM_WORKERS` values can also be overridden through the environment.
+Use `scripts/genkai/parallel_loop_for_codex.sh` in the same commands for parallel best-of-N rounds. Existing `IMAGE`, `WORKDIR`, `NUM_ITERATIONS`, `NUM_ROUNDS`, and `NUM_WORKERS` values can also be overridden through the environment.
 
 ## Evaluation metrics
 
@@ -106,7 +106,7 @@ where `~` is the home directory of the user running the job. `EXP_NAME` defaults
 `parallel_loop_for_codex.sh`, or the legacy `loop_for.sh`:
 
 ```bash
-EXP_NAME=my-experiment bash script/genkai/loop_for_codex.sh
+EXP_NAME=my-experiment bash scripts/genkai/loop_for_codex.sh
 ```
 
 For example, this creates `~/experiments/autoresearch/unnamed/20260914_123456/`.

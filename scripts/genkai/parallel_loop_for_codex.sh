@@ -16,7 +16,7 @@ module load singularity-ce
 # -------------------------
 IMAGE="${IMAGE:-${HOME}/nlp-singularity/nlp-singularity.sif}"
 WORKDIR="${WORKDIR:-${HOME}/projects/autoresearch}"
-WORKER_SCRIPT="${WORKDIR}/script/genkai/worker.sh"
+WORKER_SCRIPT="${WORKDIR}/scripts/genkai/worker.sh"
 NUM_ROUNDS="${NUM_ROUNDS:-10}"
 NUM_WORKERS="${NUM_WORKERS:-4}"
 
