@@ -29,7 +29,7 @@ mkdir -p "${OUT_DIR}" "${OUT_DIR}/torchinductor_cache" "${OUT_DIR}/triton_cache"
 
 experiment_tool() {
     singularity exec \
-        --bind "${REPO_ROOT}:${REPO_ROOT}" \
+        --bind "${REPO_ROOT}:${REPO_ROOT}" --bind "${OUT_DIR}:${OUT_DIR}" \
         --pwd "${WORKTREE}" \
         "${IMAGE}" \
         bash -lc 'uv run "$@"' _ "${EXPERIMENT_TOOL}" "$@"
@@ -49,7 +49,7 @@ SINGULARITYENV_TORCHINDUCTOR_CACHE_DIR="${OUT_DIR}/torchinductor_cache" \
 SINGULARITYENV_TRITON_CACHE_DIR="${OUT_DIR}/triton_cache" \
 timeout 600 singularity exec \
     --nv \
-    --bind "${REPO_ROOT}:${REPO_ROOT}" \
+    --bind "${REPO_ROOT}:${REPO_ROOT}" --bind "${OUT_DIR}:${OUT_DIR}" \
     --pwd "${WORKTREE}" \
     "${IMAGE}" \
     bash -lc "uv run train.py" \
