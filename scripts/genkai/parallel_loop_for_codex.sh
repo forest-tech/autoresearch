@@ -33,6 +33,22 @@ if [[ "${PROMPT_TEMPLATE}" != /* ]]; then
     PROMPT_TEMPLATE="${WORKDIR}/${PROMPT_TEMPLATE}"
 fi
 
+# Per-worker overrides, e.g. WORKER_1_PROMPT_TEMPLATE=prompts/candidate_exploratory.txt.
+# Unset or empty overrides use PROMPT_TEMPLATE. Relative paths use WORKDIR.
+if [[ ! "${NUM_WORKERS}" =~ ^[1-9][0-9]*$ ]]; then
+    echo "[ERROR] NUM_WORKERS must be a positive integer: ${NUM_WORKERS}" >&2
+    exit 1
+fi
+declare -a WORKER_PROMPT_TEMPLATES=()
+for ((WORKER = 0; WORKER < NUM_WORKERS; WORKER++)); do
+    PROMPT_VAR="WORKER_${WORKER}_PROMPT_TEMPLATE"
+    WORKER_PROMPT="${!PROMPT_VAR:-${PROMPT_TEMPLATE}}"
+    if [[ "${WORKER_PROMPT}" != /* ]]; then
+        WORKER_PROMPT="${WORKDIR}/${WORKER_PROMPT}"
+    fi
+    WORKER_PROMPT_TEMPLATES[${WORKER}]="${WORKER_PROMPT}"
+done
+
 # 保存先の設定: `EXP_NAME=my-experiment bash ...` で上書きできます。
 EXP_NAME="${EXP_NAME:-unnamed}"
 DATE=$(date +%Y%m%d_%H%M%S)
@@ -122,7 +138,7 @@ generate_candidate() {
 
     mkdir -p "${worker_dir}"
     experiment_tool render-prompt \
-        --template "${PROMPT_TEMPLATE}" --results "${RESULT_FILE}" \
+        --template "${WORKER_PROMPT_TEMPLATES[${worker}]}" --results "${RESULT_FILE}" \
         --output "${prompt_file}" --history-output "${history_file}" \
         --metadata-output "${prompt_metadata}" \
         --history-mode "${HISTORY_MODE}" --history-limit "${HISTORY_LIMIT}" \
@@ -176,6 +192,13 @@ experiment_tool validate-config \
     --history-mode "${HISTORY_MODE}" --history-limit "${HISTORY_LIMIT}" \
     --template "${PROMPT_TEMPLATE}"
 
+for WORKER_PROMPT in "${WORKER_PROMPT_TEMPLATES[@]}"; do
+    experiment_tool validate-config \
+        --primary-metric "${PRIMARY_METRIC}" --direction "${OBJECTIVE_DIRECTION}" \
+        --history-mode "${HISTORY_MODE}" --history-limit "${HISTORY_LIMIT}" \
+        --template "${WORKER_PROMPT}"
+done
+
 git diff --quiet && git diff --cached --quiet || {
     echo "[ERROR] tracked changes must be committed before a run" >&2
     exit 1
@@ -204,6 +227,10 @@ fi
 
 echo "[SETUP] objective=${PRIMARY_METRIC}/${OBJECTIVE_DIRECTION}"
 echo "[SETUP] prompt=${PROMPT_TEMPLATE#${WORKDIR}/} history=${HISTORY_MODE} limit=${HISTORY_LIMIT}"
+for ((WORKER = 0; WORKER < NUM_WORKERS; WORKER++)); do
+    WORKER_PROMPT="${WORKER_PROMPT_TEMPLATES[${WORKER}]}"
+    echo "[SETUP] worker_${WORKER} prompt=${WORKER_PROMPT#${WORKDIR}/}"
+done
 echo "[SETUP] GPUs=${GPU_COUNT} results=${RESULT_FILE}"
 
 # Evaluate accepted HEAD once for this run's baseline.

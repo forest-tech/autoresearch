@@ -77,6 +77,21 @@ Genkai experiment results are saved in `~/experiments/autoresearch/EXP_NAME/DATE
 
 The same variables configure `scripts/genkai/parallel_loop_for_codex.sh`. See [docs/experiment-infrastructure.md](docs/experiment-infrastructure.md) for metric definitions, the JSONL schema, prompt template variables, and extension instructions.
 
+For parallel runs, set `WORKER_<index>_PROMPT_TEMPLATE` to choose a strategy for
+each worker (indices start at 0):
+
+```bash
+NUM_WORKERS=2 \
+  WORKER_0_PROMPT_TEMPLATE=prompts/candidate_default.txt \
+  WORKER_1_PROMPT_TEMPLATE=prompts/candidate_exploratory.txt \
+  bash scripts/genkai/parallel_loop_for_codex.sh
+```
+
+Unset or empty worker overrides use `PROMPT_TEMPLATE`, which defaults to
+`prompts/candidate_default.txt`. Relative paths are resolved from `WORKDIR`;
+absolute paths are also accepted. The selected template and its hash are recorded
+in each candidate's `prompt_metadata.json` and result entry.
+
 ## Project structure
 
 ```
