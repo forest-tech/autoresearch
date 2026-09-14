@@ -12,8 +12,8 @@ module load singularity-ce
 # =========================
 # 設定
 # =========================
-# 保存先の設定: このスクリプト内で実験名を編集してください。
-EXP_NAME="unnamed"  # 実験名を指定しない場合の名前
+# 保存先の設定: `EXP_NAME=my-experiment bash ...` で上書きできます。
+EXP_NAME="${EXP_NAME:-unnamed}"
 # プロットする実験の日時を入力してください (例: 20260914_123456)。
 DATE=""
 if [[ ! "${EXP_NAME}" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then

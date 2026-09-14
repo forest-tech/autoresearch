@@ -73,7 +73,7 @@ PRIMARY_METRIC=val_bpb OBJECTIVE_DIRECTION=min HISTORY_MODE=all \
   bash script/genkai/loop_for_codex.sh
 ```
 
-Genkai experiment results are saved in `~/experiments/autoresearch/EXP_NAME/DATE/`. Edit `EXP_NAME="unnamed"` inside the loop script to name an experiment (`unnamed` means no name specified); `DATE` is generated automatically. For plotting, edit `EXP_NAME` and `DATE` inside `script/genkai/plot_results.sh` or `script/genkai/plot_results_parallel.sh` to select the run.
+Genkai experiment results are saved in `~/experiments/autoresearch/EXP_NAME/DATE/`. `EXP_NAME` defaults to `unnamed`; set it at execution time to name an experiment, for example `EXP_NAME=my-experiment bash script/genkai/loop_for_codex.sh`. `DATE` is generated automatically. For plotting, set `EXP_NAME` and edit `DATE` inside `script/genkai/plot_results.sh` or `script/genkai/plot_results_parallel.sh` to select the run.
 
 The same variables configure `script/genkai/parallel_loop_for_codex.sh`. See [docs/experiment-infrastructure.md](docs/experiment-infrastructure.md) for metric definitions, the JSONL schema, prompt template variables, and extension instructions.
 

@@ -18,8 +18,8 @@ WORKDIR="${HOME}/projects/autoresearch"
 
 NUM_ITERATIONS=3
 
-# 保存先の設定: このスクリプト内で実験名を編集してください。
-EXP_NAME="unnamed"  # 実験名を指定しない場合の名前
+# 保存先の設定: `EXP_NAME=my-experiment bash ...` で上書きできます。
+EXP_NAME="${EXP_NAME:-unnamed}"
 DATE=$(date +%Y%m%d_%H%M%S)
 if [[ ! "${EXP_NAME}" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
     echo "[ERROR] invalid EXP_NAME: ${EXP_NAME}" >&2

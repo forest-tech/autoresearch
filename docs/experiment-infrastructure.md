@@ -101,25 +101,24 @@ Keep the ownership and safety constraints from `candidate_default.txt` in varian
 ### Genkai result directories
 
 The Genkai experiment loops save results under `~/experiments/autoresearch/EXP_NAME/DATE/`,
-where `~` is the home directory of the user running the job. Edit these settings
-inside `loop_for_codex.sh`, `parallel_loop_for_codex.sh`, or the legacy `loop_for.sh`:
+where `~` is the home directory of the user running the job. `EXP_NAME` defaults to
+`unnamed` and can be set at execution time for `loop_for_codex.sh`,
+`parallel_loop_for_codex.sh`, or the legacy `loop_for.sh`:
 
 ```bash
-EXP_NAME="unnamed"
-DATE=$(date +%Y%m%d_%H%M%S)
+EXP_NAME=my-experiment bash script/genkai/loop_for_codex.sh
 ```
 
 For example, this creates `~/experiments/autoresearch/unnamed/20260914_123456/`.
 The default `unnamed` indicates that no experiment name has been specified.
 Experiment names can contain letters, digits, dots, underscores, or hyphens,
-starting with a letter or digit. These settings are defined inside the scripts;
-environment variables do not override them.
+starting with a letter or digit.
 
 For plotting, edit the settings inside `plot_results.sh` or `plot_results_parallel.sh`
 to select the experiment name and the timestamp of an existing run:
 
 ```bash
-EXP_NAME="unnamed"
+EXP_NAME=my-experiment
 DATE="20260914_123456"
 ```
 
