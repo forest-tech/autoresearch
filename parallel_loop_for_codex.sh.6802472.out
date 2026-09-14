@@ -1,0 +1,6 @@
+[SETUP] objective=val_bpb/min
+[SETUP] prompt=prompts/candidate_default.txt history=all limit=10
+[SETUP] GPUs=4 results=/home/pj24001974/ku50001532/experiments/autoresearch/baseline/20260914_183158/results.jsonl
+Preparing worktree (detached HEAD 30f7519)
+Updating files:  81% (35/43)Updating files:  83% (36/43)Updating files:  86% (37/43)Updating files:  88% (38/43)Updating files:  90% (39/43)Updating files:  93% (40/43)Updating files:  95% (41/43)Updating files:  97% (42/43)Updating files: 100% (43/43)Updating files: 100% (43/43), done.
+[ERROR] baseline failed or did not emit val_bpb
