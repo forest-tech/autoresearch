@@ -16,8 +16,8 @@ WORKDIR="/home/pj24001974/ku50001532/projects/autoresearch-history-1"
 HISTORY_MODE="recent"
 HISTORY_LIMIT="1"
 # -------------------------
-IMAGE="${IMAGE:-/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif}"
-WORKDIR="${WORKDIR:-/home/pj24001974/ku50001532/projects/autoresearch}"
+IMAGE="${IMAGE:-${HOME}/nlp-singularity/nlp-singularity.sif}"
+WORKDIR="${WORKDIR:-${HOME}/projects/autoresearch}"
 WORKER_SCRIPT="${WORKDIR}/script/genkai/worker.sh"
 NUM_ROUNDS="${NUM_ROUNDS:-10}"
 NUM_WORKERS="${NUM_WORKERS:-4}"
@@ -35,18 +35,29 @@ if [[ "${PROMPT_TEMPLATE}" != /* ]]; then
     PROMPT_TEMPLATE="${WORKDIR}/${PROMPT_TEMPLATE}"
 fi
 
-DATE=${DATE:-$(date +%Y%m%d_%H%M%S)}
-RUN_ROOT="${WORKDIR}/results/${DATE}"
+# 保存先の設定: このスクリプト内で実験名を編集してください。
+EXP_NAME="unnamed"  # 実験名を指定しない場合の名前
+DATE=$(date +%Y%m%d_%H%M%S)
+if [[ ! "${EXP_NAME}" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
+    echo "[ERROR] invalid EXP_NAME: ${EXP_NAME}" >&2
+    exit 1
+fi
+if [[ ! "${DATE}" =~ ^[0-9]{8}_[0-9]{6}$ ]]; then
+    echo "[ERROR] set DATE in this script to YYYYMMDD_HHMMSS" >&2
+    exit 1
+fi
+RUN_ROOT="${HOME}/experiments/autoresearch/${EXP_NAME}/${DATE}"
+mkdir -p "${RUN_ROOT}"
 RESULT_FILE="${RUN_ROOT}/results.jsonl"
 RUN_CONFIG="${RUN_ROOT}/run_config.json"
-WORKTREE_ROOT="${WORKDIR}/worktrees/${DATE}"
+WORKTREE_ROOT="${WORKDIR}/worktrees/${EXP_NAME}/${DATE}"
 EXPERIMENT_TOOL="${WORKDIR}/experiment_utils.py"
 
 cd "${WORKDIR}"
 
 experiment_tool() {
     singularity exec \
-        --bind "${WORKDIR}:${WORKDIR}" \
+        --bind "${WORKDIR}:${WORKDIR}" --bind "${RUN_ROOT}:${RUN_ROOT}" \
         --pwd "${WORKDIR}" \
         "${IMAGE}" \
         bash -lc 'uv run "$@"' _ "${EXPERIMENT_TOOL}" "$@"
@@ -124,7 +135,7 @@ generate_candidate() {
 
     echo "[CODEX] round=${round} worker=${worker} generating candidate"
     if ! singularity exec \
-        --bind "${WORKDIR}:${WORKDIR}" --pwd "${wt}" "${IMAGE}" \
+        --bind "${WORKDIR}:${WORKDIR}" --bind "${RUN_ROOT}:${RUN_ROOT}" --pwd "${wt}" "${IMAGE}" \
         bash -lc \
         "codex exec \
             --model '${CODEX_MODEL}' \
@@ -222,7 +233,7 @@ fi
 
 append_result "${ITERATION}" 0 -1 "${BASE_COMMIT_SHORT}" "${BASE_COMMIT_SHORT}" \
     keep baseline "${BASELINE_RESULT}" "${BASELINE_CONFIG}" \
-    "results/${DATE}/baseline" "${RUN_CONFIG}" 0
+    "${RUN_ROOT}/baseline" "${RUN_CONFIG}" 0
 remove_worktree "${BASELINE_WT}"
 echo "[BASELINE] ${PRIMARY_METRIC}=${BEST_VAL} commit=${BASE_COMMIT_SHORT}"
 
@@ -307,7 +318,7 @@ for ROUND in $(seq 1 "${NUM_ROUNDS}"); do
         append_result "${ITERATION}" "${ROUND}" "${WORKER}" "${BASE_COMMIT_SHORT}" "${COMMIT}" \
             "${STATUS}" "${DESCRIPTIONS[${WORKER}]}" "${RESULT_FILES[${WORKER}]}" \
             "${CONFIG_FILES[${WORKER}]}" \
-            "results/${DATE}/round_${TAG}/worker_${WORKER}" \
+            "${RUN_ROOT}/round_${TAG}/worker_${WORKER}" \
             "${PROMPT_METADATA_FILES[${WORKER}]}" 1
     done
 

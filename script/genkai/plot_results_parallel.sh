@@ -12,12 +12,24 @@ module load singularity-ce
 # =========================
 # 設定
 # =========================
-EXP_DIR="20260909_155301"
-RESULT_FILE="./results/${EXP_DIR}/results.jsonl"
-OUTPUT_FILE="./results/${EXP_DIR}/progress.png"
+# 保存先の設定: このスクリプト内で実験名を編集してください。
+EXP_NAME="unnamed"  # 実験名を指定しない場合の名前
+# プロットする実験の日時を入力してください (例: 20260914_123456)。
+DATE=""
+if [[ ! "${EXP_NAME}" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
+    echo "[ERROR] invalid EXP_NAME: ${EXP_NAME}" >&2
+    exit 1
+fi
+if [[ ! "${DATE}" =~ ^[0-9]{8}_[0-9]{6}$ ]]; then
+    echo "[ERROR] set DATE in this script to YYYYMMDD_HHMMSS" >&2
+    exit 1
+fi
+RUN_ROOT="${HOME}/experiments/autoresearch/${EXP_NAME}/${DATE}"
+RESULT_FILE="${RUN_ROOT}/results.jsonl"
+OUTPUT_FILE="${RUN_ROOT}/progress.png"
 
-IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
-WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch
+IMAGE="${HOME}/nlp-singularity/nlp-singularity.sif"
+WORKDIR="${HOME}/projects/autoresearch"
 METRIC="${METRIC:-val_bpb}"
 
 # 絶対パスに変換
@@ -42,7 +54,7 @@ echo
 # =========================
 
 singularity exec \
-    --bind "${WORKDIR}:${WORKDIR}" \
+    --bind "${WORKDIR}:${WORKDIR}" --bind "${RUN_ROOT}:${RUN_ROOT}" \
     --pwd "${WORKDIR}" \
     "${IMAGE}" \
     bash -lc "

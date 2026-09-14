@@ -84,8 +84,8 @@ Each run has `run_config.json`. Each generated candidate saves `codex_prompt.txt
 Plotting defaults to BPB and understands old and new records. Select another metric with, for example:
 
 ```bash
-uv run python plot_results.py results/RUN/results.jsonl --metric val_loss
-uv run python plot_results_parallel.py results/RUN/results.jsonl --metric val_loss
+uv run python plot_results.py ~/experiments/autoresearch/unnamed/DATE/results.jsonl --metric val_loss
+uv run python plot_results_parallel.py ~/experiments/autoresearch/unnamed/DATE/results.jsonl --metric val_loss
 ```
 
 ## History and prompt templates
@@ -97,3 +97,38 @@ To add a prompt strategy, copy a file under `prompts/`, edit its instructions, a
 `iteration`, `worker`, `base_commit`, `current_best`, `primary_metric`, `objective_direction`, `objective_preference`, `metric_description`, `history_mode`, `history_limit`, `history_count`, `history_records`, and `candidates`.
 
 Keep the ownership and safety constraints from `candidate_default.txt` in variants unless changing one of those constraints is itself the explicit research condition.
+
+### Genkai result directories
+
+The Genkai experiment loops save results under `~/experiments/autoresearch/EXP_NAME/DATE/`,
+where `~` is the home directory of the user running the job. Edit these settings
+inside `loop_for_codex.sh`, `parallel_loop_for_codex.sh`, or the legacy `loop_for.sh`:
+
+```bash
+EXP_NAME="unnamed"
+DATE=$(date +%Y%m%d_%H%M%S)
+```
+
+For example, this creates `~/experiments/autoresearch/unnamed/20260914_123456/`.
+The default `unnamed` indicates that no experiment name has been specified.
+Experiment names can contain letters, digits, dots, underscores, or hyphens,
+starting with a letter or digit. These settings are defined inside the scripts;
+environment variables do not override them.
+
+For plotting, edit the settings inside `plot_results.sh` or `plot_results_parallel.sh`
+to select the experiment name and the timestamp of an existing run:
+
+```bash
+EXP_NAME="unnamed"
+DATE="20260914_123456"
+```
+
+The plot scripts initially leave `DATE` empty and require it to be filled in.
+The result directory contains `results.jsonl`, run configuration, per-iteration
+or per-worker logs, patches, prompts, and plots. Artifact paths in new JSONL
+records are absolute paths. The scripts explicitly bind the result directory
+into Singularity. The legacy `loop_for.sh` uses the same directory convention,
+keeping its `result.jsonl` and `train.log` filenames. Parallel temporary Git
+worktrees remain under `WORKDIR/worktrees/EXP_NAME/DATE/`. Existing results are
+not moved automatically. `train.sh` and `prepare.sh` continue to write job output
+to the scheduler's standard output; they do not create experiment result files.
