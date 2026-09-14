@@ -10,8 +10,8 @@ set -euo pipefail
 module load singularity-ce
 
 # Infrastructure, objective, and prompt settings are independent.
-IMAGE="${IMAGE:-/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif}"
-WORKDIR="${WORKDIR:-/home/pj24001974/ku50001532/projects/autoresearch}"
+IMAGE="${IMAGE:-${HOME}/nlp-singularity/nlp-singularity.sif}"
+WORKDIR="${WORKDIR:-${HOME}/projects/autoresearch}"
 NUM_ITERATIONS="${NUM_ITERATIONS:-10}"
 PRIMARY_METRIC="${PRIMARY_METRIC:-val_bpb}"
 OBJECTIVE_DIRECTION="${OBJECTIVE_DIRECTION:-min}"
@@ -23,8 +23,19 @@ if [[ "${PROMPT_TEMPLATE}" != /* ]]; then
     PROMPT_TEMPLATE="${WORKDIR}/${PROMPT_TEMPLATE}"
 fi
 
+# 保存先の設定: このスクリプト内で実験名を編集してください。
+EXP_NAME="unnamed"  # 実験名を指定しない場合の名前
 DATE=$(date +%Y%m%d_%H%M%S)
-RUN_ROOT="${WORKDIR}/results/${DATE}"
+if [[ ! "${EXP_NAME}" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
+    echo "[ERROR] invalid EXP_NAME: ${EXP_NAME}" >&2
+    exit 1
+fi
+if [[ ! "${DATE}" =~ ^[0-9]{8}_[0-9]{6}$ ]]; then
+    echo "[ERROR] set DATE in this script to YYYYMMDD_HHMMSS" >&2
+    exit 1
+fi
+RUN_ROOT="${HOME}/experiments/autoresearch/${EXP_NAME}/${DATE}"
+mkdir -p "${RUN_ROOT}"
 RESULT_FILE="${RUN_ROOT}/results.jsonl"
 RUN_CONFIG="${RUN_ROOT}/run_config.json"
 EXPERIMENT_TOOL="${WORKDIR}/experiment_utils.py"
@@ -33,7 +44,7 @@ cd "${WORKDIR}"
 
 experiment_tool() {
     singularity exec \
-        --bind "${WORKDIR}:${WORKDIR}" \
+        --bind "${WORKDIR}:${WORKDIR}" --bind "${RUN_ROOT}:${RUN_ROOT}" \
         --pwd "${WORKDIR}" \
         "${IMAGE}" \
         bash -lc 'uv run "$@"' _ "${EXPERIMENT_TOOL}" "$@"
@@ -49,16 +60,16 @@ append_result() {
         --prompt-metadata "${prompt_metadata}" --iteration "${iteration}"
         --status "${status}" --description "${description}"
         --primary-metric "${PRIMARY_METRIC}" --direction "${OBJECTIVE_DIRECTION}"
-        --log "results/${DATE}/iter_${tag}/train.log"
-        --patch "results/${DATE}/iter_${tag}/change.patch"
-        --config-artifact "results/${DATE}/iter_${tag}/config.json"
+        --log "${RUN_ROOT}/iter_${tag}/train.log"
+        --patch "${RUN_ROOT}/iter_${tag}/change.patch"
+        --config-artifact "${RUN_ROOT}/iter_${tag}/config.json"
     )
     [[ -n "${commit}" ]] && args+=(--commit "${commit}")
     [[ -n "${base_commit}" ]] && args+=(--base-commit "${base_commit}")
     if [[ "${prompt_metadata}" != "${RUN_CONFIG}" ]]; then
         args+=(
-            --prompt "results/${DATE}/iter_${tag}/codex_prompt.txt"
-            --history "results/${DATE}/iter_${tag}/history_context.jsonl"
+            --prompt "${RUN_ROOT}/iter_${tag}/codex_prompt.txt"
+            --history "${RUN_ROOT}/iter_${tag}/history_context.jsonl"
         )
     fi
     experiment_tool "${args[@]}"
@@ -146,7 +157,7 @@ for n in $(seq 1 "${NUM_ITERATIONS}"); do
 
         echo "[CODEX] generating candidate"
         if ! singularity exec \
-            --bind "${WORKDIR}:${WORKDIR}" --pwd "${WORKDIR}" "${IMAGE}" \
+            --bind "${WORKDIR}:${WORKDIR}" --bind "${RUN_ROOT}:${RUN_ROOT}" --pwd "${WORKDIR}" "${IMAGE}" \
             bash -lc \
             "codex exec --sandbox danger-full-access --skip-git-repo-check -o '${CODEX_MESSAGE}' - < '${PROMPT_FILE}'" \
             >"${CODEX_STDOUT}" 2>"${CODEX_STDERR}"
@@ -183,7 +194,7 @@ for n in $(seq 1 "${NUM_ITERATIONS}"); do
     echo "[TRAIN] starting"
     TRAIN_EXIT=0
     timeout 600 singularity exec \
-        --nv --bind "${WORKDIR}:${WORKDIR}" --pwd "${WORKDIR}" "${IMAGE}" \
+        --nv --bind "${WORKDIR}:${WORKDIR}" --bind "${RUN_ROOT}:${RUN_ROOT}" --pwd "${WORKDIR}" "${IMAGE}" \
         bash -lc "uv run train.py" >"${TRAIN_LOG}" 2>&1 || TRAIN_EXIT=$?
 
     experiment_tool write-run-result \

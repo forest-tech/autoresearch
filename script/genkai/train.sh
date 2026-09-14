@@ -9,10 +9,10 @@
 module load singularity-ce
 
 # Singularityイメージ
-IMAGE=/home/pj24001974/ku50001532/nlp-singularity/nlp-singularity.sif
+IMAGE="${HOME}/nlp-singularity/nlp-singularity.sif"
 
 # プロジェクトディレクトリ
-WORKDIR=/home/pj24001974/ku50001532/projects/autoresearch
+WORKDIR="${HOME}/projects/autoresearch"
 
 singularity exec \
     --nv \
