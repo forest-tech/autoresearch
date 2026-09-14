@@ -12,7 +12,7 @@ module load singularity-ce
 # =========================
 # custom
 # =========================
-
+EXP_NAME="history-all"
 # -------------------------
 IMAGE="${IMAGE:-${HOME}/nlp-singularity/nlp-singularity.sif}"
 WORKDIR="${WORKDIR:-${HOME}/projects/autoresearch}"
