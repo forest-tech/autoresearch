@@ -14,17 +14,46 @@ module load singularity-ce
 # =========================
 # 保存先の設定: `EXP_NAME=my-experiment bash ...` で上書きできます。
 EXP_NAME="${EXP_NAME:-unnamed}"
-# プロットする実験の日時を入力してください (例: 20260914_123456)。
-DATE=""
+# 未指定時は最新の実験ディレクトリを使用します。DATE を指定するとその日時を使用します。
+DATE="${DATE:-}"
 if [[ ! "${EXP_NAME}" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
     echo "[ERROR] invalid EXP_NAME: ${EXP_NAME}" >&2
     exit 1
 fi
-if [[ ! "${DATE}" =~ ^[0-9]{8}_[0-9]{6}$ ]]; then
-    echo "[ERROR] set DATE in this script to YYYYMMDD_HHMMSS" >&2
+EXPERIMENT_ROOT="${HOME}/experiments/${EXP_NAME}"
+REQUESTED_RUN="${DATE}"
+
+if [[ ! -d "${EXPERIMENT_ROOT}" ]]; then
+    echo "[ERROR] experiment root directory not found: ${EXPERIMENT_ROOT}" >&2
     exit 1
 fi
-RUN_ROOT="${HOME}/experiments/autoresearch/${EXP_NAME}/${DATE}"
+
+if [[ -n "${REQUESTED_RUN}" ]]; then
+    if [[ "${REQUESTED_RUN}" = /* ]]; then
+        RUN_ROOT="${REQUESTED_RUN}"
+    else
+        RUN_ROOT="${EXPERIMENT_ROOT}/${REQUESTED_RUN}"
+    fi
+    if [[ ! -d "${RUN_ROOT}" ]]; then
+        echo "[ERROR] experiment directory not found: ${RUN_ROOT}" >&2
+        exit 1
+    fi
+else
+    RUN_ROOT=""
+    while IFS= read -r -d '' candidate; do
+        candidate_name="${candidate##*/}"
+        if [[ "${candidate_name}" =~ ^[0-9]{8}_[0-9]{6}$ ]] &&
+           [[ -z "${RUN_ROOT}" || "${candidate_name}" > "${RUN_ROOT##*/}" ]]; then
+            RUN_ROOT="${candidate}"
+        fi
+    done < <(find "${EXPERIMENT_ROOT}" -mindepth 1 -maxdepth 1 -type d -print0)
+
+    if [[ -z "${RUN_ROOT}" ]]; then
+        echo "[ERROR] no experiment directories matching YYYYMMDD_HHMMSS found in: ${EXPERIMENT_ROOT}" >&2
+        exit 1
+    fi
+fi
+
 RESULT_FILE="${RUN_ROOT}/results.jsonl"
 OUTPUT_FILE="${RUN_ROOT}/progress.png"
 
