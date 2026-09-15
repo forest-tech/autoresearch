@@ -20,7 +20,7 @@ if [[ ! "${EXP_NAME}" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
     echo "[ERROR] invalid EXP_NAME: ${EXP_NAME}" >&2
     exit 1
 fi
-EXPERIMENT_ROOT="${HOME}/experiments/${EXP_NAME}"
+EXPERIMENT_ROOT="${HOME}/experiments/autoresearch/${EXP_NAME}"
 REQUESTED_RUN="${DATE}"
 
 if [[ ! -d "${EXPERIMENT_ROOT}" ]]; then
