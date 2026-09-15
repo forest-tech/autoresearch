@@ -12,7 +12,7 @@ module load singularity-ce
 # =========================
 # custom
 # =========================
-
+WORKDIR="${HOME}/projects/autoresearch-parallel-strategy-diversity"
 # -------------------------
 IMAGE="${IMAGE:-${HOME}/nlp-singularity/nlp-singularity.sif}"
 WORKDIR="${WORKDIR:-${HOME}/projects/autoresearch}"
