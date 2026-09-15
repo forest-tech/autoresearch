@@ -53,18 +53,34 @@ module load singularity-ce
 mkdir -p "$(dirname "${OUTPUT_FILE}")"
 OUTPUT_PARENT="$(cd "$(dirname "${OUTPUT_FILE}")" && pwd)"
 OUTPUT_FILE="${OUTPUT_PARENT}/$(basename "${OUTPUT_FILE}")"
-BIND_ARGS=(--bind "${WORKDIR}:${WORKDIR}" --bind "${PWD}:${PWD}" --bind "${OUTPUT_PARENT}:${OUTPUT_PARENT}")
+WORKDIR="$(cd "${WORKDIR}" && pwd -P)"
+BIND_DIRS=("${WORKDIR}")
+BIND_ARGS=(--bind "${WORKDIR}:${WORKDIR}")
+add_bind() {
+    local directory existing
+    directory="$(cd "$1" && pwd -P)"
+    for existing in "${BIND_DIRS[@]}"; do
+        if [[ "${existing}" == "${directory}" ]]; then
+            return 0
+        fi
+    done
+    BIND_DIRS+=("${directory}")
+    BIND_ARGS+=(--bind "${directory}:${directory}")
+}
+add_bind "${PWD}"
+add_bind "${OUTPUT_PARENT}"
 for argument in "${RESULT_FILES[@]}"; do
     if [[ -f "${argument}" ]]; then
         input_parent="$(cd "$(dirname "${argument}")" && pwd)"
-        BIND_ARGS+=(--bind "${input_parent}:${input_parent}")
+        add_bind "${input_parent}"
     fi
 done
 singularity exec \
     "${BIND_ARGS[@]}" \
     --pwd "${PWD}" \
     "${IMAGE}" \
-    uv run --project "${WORKDIR}" "${WORKDIR}/plot_results_comparison.py" \
+    bash -lc 'uv run --project "$1" "$1/plot_results_comparison.py" "${@:2}"' \
+    plot-results-comparison "${WORKDIR}" \
     --metric "${METRIC}" \
     --labels "${RESULT_LABELS[@]}" \
     -o "${OUTPUT_FILE}" \
