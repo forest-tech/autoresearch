@@ -38,6 +38,7 @@ Instructions:
 - Do NOT run uv run train.py or other expensive training.
 - Do NOT edit prepare.py, program.md, results, artifacts, scripts, or .git.
 - Do NOT run git commit/reset/checkout/restore.
+- Do NOT perform any other Git operation.
 - Leave train.py runnable as-is.
 
 Final response: output only a concise one-line description of the experiment. Do not use tabs.

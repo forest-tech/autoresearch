@@ -33,20 +33,37 @@ if [[ "${PROMPT_TEMPLATE}" != /* ]]; then
     PROMPT_TEMPLATE="${WORKDIR}/${PROMPT_TEMPLATE}"
 fi
 
-# Per-worker overrides, e.g. WORKER_1_PROMPT_TEMPLATE=prompts/candidate_exploratory.txt.
-# Unset or empty overrides use PROMPT_TEMPLATE. Relative paths use WORKDIR.
-if [[ ! "${NUM_WORKERS}" =~ ^[1-9][0-9]*$ ]]; then
-    echo "[ERROR] NUM_WORKERS must be a positive integer: ${NUM_WORKERS}" >&2
+# Use the first N strategies; extra workers require an explicit code mapping.
+if [[ ! "${NUM_WORKERS}" =~ ^[1-4]$ ]]; then
+    echo "[ERROR] NUM_WORKERS must be 1..4; strategies are defined only for workers 0..3 (got: ${NUM_WORKERS})" >&2
     exit 1
 fi
 declare -a WORKER_PROMPT_TEMPLATES=()
 for ((WORKER = 0; WORKER < NUM_WORKERS; WORKER++)); do
+    case "${WORKER}" in
+        0) STRATEGY="default"; WORKER_PROMPT="${PROMPT_TEMPLATE}" ;;
+        1) STRATEGY="random-coordinate"; WORKER_PROMPT="prompts/candidate_random_coordinate.txt" ;;
+        2) STRATEGY="sparse-mutation"; WORKER_PROMPT="prompts/candidate_sparse_mutation.txt" ;;
+        3) STRATEGY="adaptive-mutation"; WORKER_PROMPT="prompts/candidate_adaptive_mutation.txt" ;;
+    esac
+    # Preserve explicit per-worker overrides. PROMPT_TEMPLATE now defaults worker 0 only.
+    # Relative paths use WORKDIR; label overrides so the log does not misstate the strategy.
     PROMPT_VAR="WORKER_${WORKER}_PROMPT_TEMPLATE"
-    WORKER_PROMPT="${!PROMPT_VAR:-${PROMPT_TEMPLATE}}"
+    if [[ -n "${!PROMPT_VAR:-}" ]]; then
+        WORKER_PROMPT="${!PROMPT_VAR}"
+        STRATEGY="custom"
+    elif [[ "${WORKER}" -eq 0 && "${PROMPT_TEMPLATE}" != "${WORKDIR}/prompts/candidate_default.txt" ]]; then
+        STRATEGY="custom"
+    fi
     if [[ "${WORKER_PROMPT}" != /* ]]; then
         WORKER_PROMPT="${WORKDIR}/${WORKER_PROMPT}"
     fi
+    if [[ ! -f "${WORKER_PROMPT}" || ! -r "${WORKER_PROMPT}" ]]; then
+        echo "[ERROR] worker=${WORKER} prompt template missing or unreadable: ${WORKER_PROMPT}" >&2
+        exit 1
+    fi
     WORKER_PROMPT_TEMPLATES[${WORKER}]="${WORKER_PROMPT}"
+    echo "[SETUP] worker=${WORKER} strategy=${STRATEGY} prompt=${WORKER_PROMPT#${WORKDIR}/}"
 done
 
 # 保存先の設定: `EXP_NAME=my-experiment bash ...` で上書きできます。
@@ -227,10 +244,6 @@ fi
 
 echo "[SETUP] objective=${PRIMARY_METRIC}/${OBJECTIVE_DIRECTION}"
 echo "[SETUP] prompt=${PROMPT_TEMPLATE#${WORKDIR}/} history=${HISTORY_MODE} limit=${HISTORY_LIMIT}"
-for ((WORKER = 0; WORKER < NUM_WORKERS; WORKER++)); do
-    WORKER_PROMPT="${WORKER_PROMPT_TEMPLATES[${WORKER}]}"
-    echo "[SETUP] worker_${WORKER} prompt=${WORKER_PROMPT#${WORKDIR}/}"
-done
 echo "[SETUP] GPUs=${GPU_COUNT} results=${RESULT_FILE}"
 
 # Evaluate accepted HEAD once for this run's baseline.

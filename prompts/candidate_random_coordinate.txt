@@ -1,0 +1,54 @@
+You are preparing exactly one candidate experiment for an autonomous LLM training loop in an HPC environment.
+
+Runtime condition:
+- Iteration/round: ${iteration}
+- Worker: ${worker}
+- Current accepted commit: ${base_commit}
+- Primary metric: ${primary_metric}
+- Objective direction: ${objective_direction} (${objective_preference})
+- Current best objective value: ${current_best}
+- Metric definition: ${metric_description}
+- History policy: ${history_mode}; limit: ${history_limit}; records supplied: ${history_count}
+
+The experiment history intentionally supplied for this candidate is below. Treat it as the complete and authoritative history context for this prompt condition. Do not seek additional experiment-history files.
+
+<experiment_history>
+${history_records}
+</experiment_history>
+
+Candidates already proposed in this round:
+
+<round_candidates>
+${candidates}
+</round_candidates>
+
+The shell coordinator owns training execution, evaluation, GPU assignment, keep/discard decisions, winner selection, Git operations, result recording, and experiment artifacts.
+
+Your task is only to choose one new candidate experiment and edit train.py.
+
+Instructions:
+- Read README.md, prepare.py, and train.py for repository and model context.
+- Use only the experiment history supplied above when reasoning about prior outcomes.
+- Choose a candidate different from candidates already proposed in this round.
+- Use prior keep/discard outcomes and recorded hyperparameters to avoid repeating unsuccessful experiments.
+- Compare the accepted configuration with previous candidate configurations.
+- Choose a change with a plausible chance to improve ${primary_metric} in the configured direction.
+- Edit ONLY train.py.
+- Do NOT run uv run train.py or other expensive training.
+- Do NOT edit prepare.py, program.md, results, artifacts, scripts, or .git.
+- Do NOT run git commit/reset/checkout/restore.
+- Do NOT perform any other Git operation.
+- Leave train.py runnable as-is.
+- Preserve training, evaluation, metric reporting, and fixed data/time/evaluation budgets; do not bypass constraints imported from prepare.py.
+- Check parameter domains, model/head compatibility, batch divisibility, schedule validity, and memory plausibility by inspecting the code without running training.
+
+Strategy: random-coordinate exploration
+- Identify a diverse set of editable hyperparameters in the accepted train.py, spanning model size/shape, attention, optimization, and schedules where feasible.
+- Choose exactly one main hyperparameter using a randomized, diversity-oriented coordinate choice among technically feasible options. Prefer coordinates with fewer trials in the supplied history; do not repeatedly choose only parameters that previously improved.
+- For reproducible coordinate selection, sort the eligible parameter names and use a lightweight seeded random choice with a seed derived from the supplied base commit, iteration, and worker. Keep this choice separate from training RNG settings and do not edit training seeds.
+- Make one sensible bounded perturbation relative to the accepted value: for example, a modest multiplicative step for a positive scale, a small additive step for a fraction or a zero value, or a nearby valid discrete choice. Determine bounds from the code and supplied outcomes before choosing a value.
+- Modify only that parameter; keep every other independently tunable parameter and the implementation unchanged. If changing one component of a tuple, leave its other components unchanged.
+- Inspect supplied history and current-round candidates before settling on the coordinate/value. If the proposed configuration duplicates one or repeats an unsuccessful experiment, choose another feasible coordinate/value.
+- This is controlled coordinate exploration, not unconstrained random search. Do not change every parameter.
+
+Final response: output only a concise one-line description of the experiment, identifying the changed parameter(s) and old/new values. Do not use tabs.
