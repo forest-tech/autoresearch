@@ -12,6 +12,8 @@ module load singularity-ce
 # =========================
 # 設定
 # =========================
+EXP_NAME="history-all"
+# -------------------------
 # 保存先の設定: `EXP_NAME=my-experiment bash ...` で上書きできます。
 EXP_NAME="${EXP_NAME:-unnamed}"
 # 未指定時は最新の実験ディレクトリを使用します。DATE を指定するとその日時を使用します。
