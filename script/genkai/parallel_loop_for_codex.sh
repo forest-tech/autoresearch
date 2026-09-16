@@ -12,9 +12,9 @@ module load singularity-ce
 # =========================
 # custom
 # =========================
-WORKDIR="${HOME}/projects/autoresearch-history-1-seed-43"
+WORKDIR="${HOME}/projects/autoresearch-history-10-seed-43"
 HISTORY_MODE="recent"
-HISTORY_LIMIT="1"
+HISTORY_LIMIT="10"
 # -------------------------
 IMAGE="${IMAGE:-${HOME}/nlp-singularity/nlp-singularity.sif}"
 WORKDIR="${WORKDIR:-${HOME}/projects/autoresearch}"
@@ -36,7 +36,7 @@ if [[ "${PROMPT_TEMPLATE}" != /* ]]; then
 fi
 
 # 保存先の設定: このスクリプト内で実験名を編集してください。
-EXP_NAME="history-1-seed-43"  # 実験名を指定しない場合の名前
+EXP_NAME="history-10-seed-43"  # 実験名を指定しない場合の名前
 DATE=$(date +%Y%m%d_%H%M%S)
 if [[ ! "${EXP_NAME}" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
     echo "[ERROR] invalid EXP_NAME: ${EXP_NAME}" >&2
