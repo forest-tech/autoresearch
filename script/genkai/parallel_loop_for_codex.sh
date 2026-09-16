@@ -1,7 +1,7 @@
 #!/bin/bash
 #PJM -L rscgrp=b-batch
 #PJM -L node=1
-#PJM -L elapse=02:00:00
+#PJM -L elapse=02:30:00
 #PJM -L jobenv=singularity
 #PJM -j
 
@@ -12,7 +12,7 @@ module load singularity-ce
 # =========================
 # custom
 # =========================
-WORKDIR="/home/pj24001974/ku50001532/projects/autoresearch-history-1"
+WORKDIR="${HOME}/projects/autoresearch-history-1-seed-43"
 HISTORY_MODE="recent"
 HISTORY_LIMIT="1"
 # -------------------------
