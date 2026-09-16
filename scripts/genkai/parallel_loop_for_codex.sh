@@ -1,7 +1,7 @@
 #!/bin/bash
 #PJM -L rscgrp=b-batch
 #PJM -L node=1
-#PJM -L elapse=02:00:00
+#PJM -L elapse=02:30:00
 #PJM -L jobenv=singularity
 #PJM -j
 
@@ -12,8 +12,8 @@ module load singularity-ce
 # =========================
 # custom
 # =========================
-EXP_NAME="history-all"
-WORKDIR="${HOME}/projects/autoresearch-history-all"
+EXP_NAME="history-all-seed-43"
+WORKDIR="${HOME}/projects/autoresearch-history-all-seed-43"
 # -------------------------
 IMAGE="${IMAGE:-${HOME}/nlp-singularity/nlp-singularity.sif}"
 WORKDIR="${WORKDIR:-${HOME}/projects/autoresearch}"
