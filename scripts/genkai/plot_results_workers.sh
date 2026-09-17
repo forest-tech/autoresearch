@@ -7,6 +7,7 @@
 
 set -euo pipefail
 
+# worker別PNGと、全workerを重ねた all_workers.png を生成します。
 # bash scripts/genkai/plot_results_workers.sh
 # RESULT_FILE / OUTPUT_DIR / METRIC / DIRECTION / ROWS_PER_PAGE で設定を上書きできます。
 RESULT_FILE="${RESULT_FILE:-${HOME}/experiments/autoresearch/parallel-strategy-diversity/20260916_224138/results.jsonl}"

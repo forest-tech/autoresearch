@@ -1,4 +1,4 @@
-"""Plot per-worker progress and a paginated, unabridged change/result ledger."""
+"""Plot combined and per-worker progress with a paginated change/result ledger."""
 
 import argparse
 import math
@@ -14,6 +14,77 @@ DEFAULT_RESULTS = Path(
     "~/experiments/autoresearch/parallel-strategy-diversity/20260916_224138/results.jsonl"
 ).expanduser()
 COLORS = {"keep": "#238b45", "discard": "#d97706", "crash": "#cb181d"}
+
+
+def plot_all_workers(plt, workers, output_dir, metric, direction):
+    """Overlay every worker's metric history in one round-based plot."""
+    from matplotlib.lines import Line2D
+    from matplotlib.ticker import MaxNLocator
+
+    worker_ids = sorted(workers)
+    color_map = plt.get_cmap("tab20", max(len(worker_ids), 1))
+    fig, ax = plt.subplots(figsize=(18, 9), layout="constrained")
+    plotted_workers = []
+
+    for color_index, worker in enumerate(worker_ids):
+        trials = workers[worker]
+        points = [
+            (record.get("round"), metric_value(record, metric), str(record.get("status", "unknown")))
+            for record in trials
+            if record.get("round") is not None and record.get("status") != "crash"
+        ]
+        points = [(round_id, value, status) for round_id, value, status in points if value is not None]
+        if not points:
+            continue
+        points.sort(key=lambda point: point[0])
+        color = color_map(color_index)
+        ax.plot(
+            [point[0] for point in points], [point[1] for point in points],
+            color=color, linewidth=1.5, alpha=0.65, zorder=1,
+        )
+        for status, marker in (("keep", "o"), ("discard", "x")):
+            status_points = [point for point in points if point[2] == status]
+            if status_points:
+                ax.scatter(
+                    [point[0] for point in status_points], [point[1] for point in status_points],
+                    color=color, marker=marker, s=55 if status == "keep" else 42,
+                    linewidths=1.4, zorder=3,
+                )
+        other_points = [point for point in points if point[2] not in {"keep", "discard"}]
+        if other_points:
+            ax.scatter(
+                [point[0] for point in other_points], [point[1] for point in other_points],
+                color=color, marker="s", s=38, zorder=3,
+            )
+        plotted_workers.append((worker, color))
+
+    if not plotted_workers:
+        raise ValueError(f"No worker records with valid round and {metric} were found")
+    worker_handles = [
+        Line2D([0], [0], color=color, marker="o", linewidth=1.5, label=f"Worker {worker}")
+        for worker, color in plotted_workers
+    ]
+    status_handles = [
+        Line2D([0], [0], color="0.25", marker="o", linestyle="none", label="keep"),
+        Line2D([0], [0], color="0.25", marker="x", linestyle="none", label="discard"),
+        Line2D([0], [0], color="0.25", marker="s", linestyle="none", label="other"),
+    ]
+    worker_legend = ax.legend(handles=worker_handles, title="Workers", loc="upper left",
+                              bbox_to_anchor=(1.01, 1), fontsize=9)
+    ax.add_artist(worker_legend)
+    ax.legend(handles=status_handles, title="Status", loc="lower left",
+              bbox_to_anchor=(1.01, 0), fontsize=9)
+    arrow = "lower is better" if direction == "min" else "higher is better"
+    ax.set_xlabel("Round")
+    ax.set_ylabel(f"{metric} ({arrow})")
+    ax.set_title(f"All Workers: {metric} by Round")
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.grid(alpha=0.2)
+    output = output_dir / "all_workers.png"
+    fig.savefig(output, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved: {output}")
+    return output
 
 
 def plot_results(records, output_dir, metric="val_bpb", direction=None, rows_per_page=15):
@@ -37,14 +108,15 @@ def plot_results(records, output_dir, metric="val_bpb", direction=None, rows_per
         raise ValueError("No records with worker IDs were found")
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    outputs = []
+    for trials in workers.values():
+        trials.sort(key=lambda r: (
+            r.get("round") if r.get("round") is not None else math.inf,
+            r.get("iteration") if r.get("iteration") is not None else math.inf,
+        ))
+    outputs = [plot_all_workers(plt, workers, output_dir, metric, direction)]
     # Disable math parsing so descriptions containing '$' remain literal text.
     with plt.rc_context({"text.parse_math": False}):
         for worker, trials in sorted(workers.items()):
-            trials.sort(key=lambda r: (
-                r.get("round") if r.get("round") is not None else math.inf,
-                r.get("iteration") if r.get("iteration") is not None else math.inf,
-            ))
             values = [metric_value(r, metric) if r.get("status") != "crash" else None for r in trials]
             best, running_best = None, []
             for value in values:
