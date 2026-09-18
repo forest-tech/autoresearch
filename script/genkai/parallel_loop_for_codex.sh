@@ -1,7 +1,7 @@
 #!/bin/bash
 #PJM -L rscgrp=b-batch
 #PJM -L node=1
-#PJM -L elapse=02:00:00
+#PJM -L elapse=02:30:00
 #PJM -L jobenv=singularity
 #PJM -j
 
@@ -12,7 +12,7 @@ module load singularity-ce
 # =========================
 # custom
 # =========================
-WORKDIR="/home/pj24001974/ku50001532/projects/autoresearch-history-1"
+WORKDIR="/home/pj24001974/ku50001532/projects/autoresearch-history-1-seed-41"
 HISTORY_MODE="recent"
 HISTORY_LIMIT="1"
 # -------------------------
@@ -36,7 +36,7 @@ if [[ "${PROMPT_TEMPLATE}" != /* ]]; then
 fi
 
 # 保存先の設定: このスクリプト内で実験名を編集してください。
-EXP_NAME="unnamed"  # 実験名を指定しない場合の名前
+EXP_NAME="history-1-seed-41"  # 実験名を指定しない場合の名前
 DATE=$(date +%Y%m%d_%H%M%S)
 if [[ ! "${EXP_NAME}" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
     echo "[ERROR] invalid EXP_NAME: ${EXP_NAME}" >&2
